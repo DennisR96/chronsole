@@ -1,6 +1,7 @@
+// components/FileTree.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronRight, ChevronDown, File, Folder as FolderIcon, FileCode, FileText, FileImage } from 'lucide-react';
 
 export type FileNode = {
@@ -23,7 +24,18 @@ export function FileTree({ data, depth = 0, activeFileId, onSelectFile }: {
   activeFileId?: string;
   onSelectFile?: (id: string) => void;
 }) {
-  const [openFolders, setOpenFolders] = useState<Set<string>>(new Set(['root', 'src', 'app']));
+  const [openFolders, setOpenFolders] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (depth === 0 && data.length > 0) {
+      setOpenFolders((prev) => {
+        if (prev.size === 0) {
+          return new Set([data[0].id]);
+        }
+        return prev;
+      });
+    }
+  }, [data, depth]);
 
   const toggleFolder = (id: string) => {
     setOpenFolders(prev => {
@@ -63,8 +75,8 @@ export function FileTree({ data, depth = 0, activeFileId, onSelectFile }: {
           <div
             key={node.id}
             className={`flex items-center gap-2 py-1 px-2 cursor-pointer transition-colors border-l-[3px] ${isSelected
-                ? 'bg-accent/10 text-accent border-accent'
-                : 'text-text-3 hover:bg-bg-raised hover:text-text-1 border-transparent'
+              ? 'bg-accent/10 text-accent border-accent'
+              : 'text-text-3 hover:bg-bg-raised hover:text-text-1 border-transparent'
               }`}
             style={{ paddingLeft: `${depth * 12 + 20}px` }}
             onClick={() => onSelectFile?.(node.id)}
