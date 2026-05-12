@@ -25,7 +25,7 @@ export default function TerminalComponent({ isActive }: TerminalProps) {
     const term = new Terminal({
       cursorBlink: false,
       cursorStyle: 'block',
-      fontFamily: 'var(--font-mono), "JetBrains Mono", monospace',
+      fontFamily: '"JetBrainsMono Nerd Font", var(--font-mono), monospace',
       fontSize: 14,
       fontWeight: '500',
       lineHeight: 1.5,

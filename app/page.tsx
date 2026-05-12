@@ -171,10 +171,16 @@ export default function TerminalPage() {
 
         if (document.fonts?.ready) {
           document.fonts.ready.then(() => {
-            try { fitAddon.fit(); } catch { }
+            try {
+              fitAddon.fit();
+              // Forces xterm.js to invalidate its character cache and redraw the grid
+              term.refresh(0, term.rows - 1);
+            } catch { }
             sendSize(socket);
           });
         }
+
+
 
         resources.current.set(tabId, {
           socket,
