@@ -275,7 +275,7 @@ export default function TerminalPage() {
                       key={tab.id}
                       onClick={() => setActiveId(tab.id)}
                       className={`group flex items-center gap-3 px-4 h-full min-w-[120px] cursor-pointer transition-colors relative ${isActive
-                        ? 'bg-bg-base text-text-1 rounded-t-lg z-10 border-t-2 border-accent'
+                        ? 'bg-bg-base text-text-1 z-10 border-t-2 border-accent'
                         : 'bg-transparent hover:bg-bg-raised text-text-3 border-t-2 border-transparent'
                         }`}
                     >

@@ -1,21 +1,17 @@
 import { useRouter } from 'next/navigation';
-import { Zap, TerminalSquare, Folder, Settings, Clock, LineChart, Box, Activity } from 'lucide-react';
+import { Zap, TerminalSquare, Folder, Settings, LineChart } from 'lucide-react';
 
-export type SidebarTab = 'terminal' | 'files' | 'settings' | 'history' | 'metrics' | 'packages' | 'activity';
+export type SidebarTab = 'terminal' | 'files' | 'system' | 'settings';
 
 interface SidebarProps {
   activeTab: SidebarTab;
 }
 
-// Map side tab names directly to app path routes
 const routeMap: Record<SidebarTab, string> = {
   terminal: '/',
   files: '/file-explorer',
+  system: '/system',
   settings: '/settings',
-  history: '/history',
-  metrics: '/metrics',
-  packages: '/packages',
-  activity: '/activity',
 };
 
 export function Sidebar({ activeTab }: SidebarProps) {
@@ -45,17 +41,10 @@ export function Sidebar({ activeTab }: SidebarProps) {
       <div className="flex flex-col gap-4 w-full items-center flex-1">
         <NavIcon tab="terminal" Icon={TerminalSquare} />
         <NavIcon tab="files" Icon={Folder} />
+        <NavIcon tab="system" Icon={LineChart} />
         <NavIcon tab="settings" Icon={Settings} />
-        <NavIcon tab="history" Icon={Clock} />
-        <NavIcon tab="metrics" Icon={LineChart} />
-        <NavIcon tab="packages" Icon={Box} />
-        <NavIcon tab="activity" Icon={Activity} />
       </div>
 
-      <div className="w-10 h-10 rounded-full border border-border-main flex items-center justify-center text-text-1 font-bold mb-2 cursor-pointer relative hover:border-accent transition-colors">
-        N
-        <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-accent rounded-full border-2 border-bg-surface"></div>
-      </div>
     </aside>
   );
 }
