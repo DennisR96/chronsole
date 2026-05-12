@@ -109,7 +109,7 @@ export default function TerminalPage() {
             brightCyan: '#33FFFF',
             brightWhite: '#FFFFFF',
           },
-          fontFamily: 'var(--font-mono), "JetBrains Mono", monospace',
+          fontFamily: '"JetBrainsMono Nerd Font", "JetBrainsMonoNL Nerd Font", var(--font-mono), "JetBrains Mono", monospace',
           fontSize: 14,
           fontWeight: '500',
           lineHeight: 1.5,
@@ -169,18 +169,32 @@ export default function TerminalPage() {
         const ro = new ResizeObserver(() => { try { fitAddon.fit(); } catch { } });
         ro.observe(el);
 
-        if (document.fonts?.ready) {
-          document.fonts.ready.then(() => {
-            try {
-              fitAddon.fit();
-              // Forces xterm.js to invalidate its character cache and redraw the grid
-              term.refresh(0, term.rows - 1);
-            } catch { }
-            sendSize(socket);
-          });
-        }
+        // ─── Ensure Nerd Font is loaded BEFORE xterm caches glyph metrics ───
+        const ensureFontLoaded = async () => {
+          try {
+            // Explicitly request the exact face xterm will render with.
+            // This forces the browser to fetch the woff2 if it hasn't already.
+            await Promise.all([
+              document.fonts.load('500 14px "JetBrainsMono Nerd Font"'),
+              document.fonts.load('400 14px "JetBrainsMono Nerd Font"'),
+            ]);
+            await document.fonts.ready;
+          } catch (err) {
+            console.warn('[xterm] font load failed', err);
+          }
 
+          try {
+            fitAddon.fit();
+            // xterm >= 5.2: invalidate the WebGL/canvas glyph atlas so icons
+            // re-render at the correct width using the now-available font.
+            (term as any).clearTextureAtlas?.();
+            term.refresh(0, term.rows - 1);
+          } catch { }
 
+          sendSize(socket);
+        };
+        ensureFontLoaded();
+        // ─────────────────────────────────────────────────────────────────────
 
         resources.current.set(tabId, {
           socket,

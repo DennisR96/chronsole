@@ -37,6 +37,16 @@ export default function RootLayout({
       className={`${chakraPetch.variable} ${jetBrainsMono.variable} h-full antialiased selection:bg-accent selection:text-accent-invert`}
       suppressHydrationWarning
     >
+      <head>
+
+
+        <link rel="preload" href="/fonts/JetBrainsMonoNerdFont-Medium.ttf"
+          as="font" type="font/ttf" crossOrigin="anonymous" />
+        <link rel="preload" href="/fonts/JetBrainsMonoNerdFont-Regular.ttf"
+          as="font" type="font/ttf" crossOrigin="anonymous" />
+      </head>
+
+
       <body className="min-h-full flex flex-col overflow-hidden relative">
         <ThemeProvider
           attribute="class"
