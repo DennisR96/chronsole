@@ -1,21 +1,34 @@
+import { useRouter } from 'next/navigation';
 import { Zap, TerminalSquare, Folder, Settings, Clock, LineChart, Box, Activity } from 'lucide-react';
 
 export type SidebarTab = 'terminal' | 'files' | 'settings' | 'history' | 'metrics' | 'packages' | 'activity';
 
 interface SidebarProps {
   activeTab: SidebarTab;
-  onTabChange: (tab: SidebarTab) => void;
 }
 
-export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
+// Map side tab names directly to app path routes
+const routeMap: Record<SidebarTab, string> = {
+  terminal: '/',
+  files: '/file-explorer',
+  settings: '/settings',
+  history: '/history',
+  metrics: '/metrics',
+  packages: '/packages',
+  activity: '/activity',
+};
+
+export function Sidebar({ activeTab }: SidebarProps) {
+  const router = useRouter();
+
   const NavIcon = ({ tab, Icon }: { tab: SidebarTab, Icon: any }) => {
     const isActive = activeTab === tab;
     return (
       <div
-        onClick={() => onTabChange(tab)}
+        onClick={() => router.push(routeMap[tab])}
         className={`w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-all ${isActive
-            ? 'bg-bg-base text-accent border border-accent/30 shadow-[0_0_10px_rgba(204,255,0,0.1)]'
-            : 'text-text-3 hover:text-text-1 hover:bg-bg-raised border border-transparent'
+          ? 'bg-bg-base text-accent border border-accent/30 shadow-[0_0_10px_rgba(204,255,0,0.1)]'
+          : 'text-text-3 hover:text-text-1 hover:bg-bg-raised border border-transparent'
           }`}
       >
         <Icon size={20} strokeWidth={isActive ? 2 : 1.5} />

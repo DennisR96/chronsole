@@ -80,3 +80,17 @@ body {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: var(--text-3);
 }
+
+.xterm {
+  padding: 50;
+  height: 100%;
+}
+
+.xterm-viewport {
+  background-color: transparent !important;
+}
+
+.xterm-screen {
+  width: 100% !important;
+  height: 100% !important;
+}

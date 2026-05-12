@@ -1,12 +1,10 @@
-// page.tsx
-'use client';
+"use client";
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import '@xterm/xterm/css/xterm.css';
 import { useTheme } from 'next-themes';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
-import { Sidebar, SidebarTab } from '@/components/Sidebar';
-import { FileTree, FileNode } from '@/components/FileTree';
+import { Sidebar } from '@/components/Sidebar';
 
 type TabStatus = 'connecting' | 'connected' | 'disconnected';
 
@@ -30,10 +28,6 @@ export default function TerminalPage() {
   const { theme, resolvedTheme } = useTheme();
   const currentTheme = resolvedTheme || theme;
 
-  const [activeSidebarTab, setActiveSidebarTab] = useState<SidebarTab>('files');
-  const [activeFile, setActiveFile] = useState<string>('');
-  const [fileSystem, setFileSystem] = useState<FileNode[]>([]);
-
   const [tabs, setTabs] = useState<Tab[]>(() => [{ id: newTabId(), label: 'TTY1', status: 'connecting' }]);
   const [activeId, setActiveId] = useState<string>(() => tabs[0].id);
   const [time, setTime] = useState('');
@@ -46,13 +40,7 @@ export default function TerminalPage() {
 
   useEffect(() => { tabsRef.current = tabs; }, [tabs]);
 
-  useEffect(() => {
-    fetch('/api/files')
-      .then((res) => res.json())
-      .then((data) => setFileSystem(data))
-      .catch((err) => console.error('Failed to load file system:', err));
-  }, []);
-
+  // Handle system clock ticking
   useEffect(() => {
     const tick = () => {
       const now = new Date();
@@ -64,6 +52,7 @@ export default function TerminalPage() {
     return () => clearInterval(id);
   }, []);
 
+  // Key handlers
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!e.ctrlKey || e.altKey || e.metaKey) return;
@@ -232,7 +221,7 @@ export default function TerminalPage() {
   useEffect(() => {
     const res = resources.current.get(activeId);
     if (res) requestAnimationFrame(() => { res.fit(); res.focus(); });
-  }, [activeId, activeSidebarTab]);
+  }, [activeId]);
 
   const addTab = () => {
     const id = newTabId();
@@ -268,111 +257,88 @@ export default function TerminalPage() {
 
   return (
     <div className="flex h-[100dvh] w-full bg-background overflow-hidden">
-      <Sidebar activeTab={activeSidebarTab} onTabChange={setActiveSidebarTab} />
+      <Sidebar activeTab="terminal" />
 
-      <div className="flex-1 flex flex-col min-w-0 bg-bg-surface p-2 sm:p-4 pl-0 sm:pl-0">
-        <div className="flex-1 flex flex-col border border-border-main rounded-xl overflow-hidden shadow-2xl bg-bg-base relative">
-
-          {activeSidebarTab === 'files' ? (
-            <div className="flex flex-col h-full bg-bg-base">
-              <div className="flex h-12 bg-bg-surface shrink-0 items-end px-2 sm:px-4 gap-2 border-b border-border-main overflow-x-auto no-scrollbar">
-                <div className="flex items-center h-full pr-6 text-xs sm:text-sm font-bold tracking-widest text-text-1">
-                  CHRONOSOLE // EXPLORER
-                </div>
-                <div className="hidden lg:flex items-center h-full px-4 gap-6 font-mono text-[11px] text-text-2 border-l border-border-main ml-auto">
-                  <div className="tracking-wider">{date} // {time}</div>
-                  <ThemeToggle />
-                </div>
-              </div>
-              <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
-                <FileTree
-                  data={fileSystem}
-                  activeFileId={activeFile}
-                  onSelectFile={setActiveFile}
-                />
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col h-full">
-              <div className="flex h-12 bg-bg-surface shrink-0 items-end px-2 sm:px-4 gap-2 overflow-x-auto no-scrollbar">
-                <div className="flex items-center h-full pr-6 text-xs sm:text-sm font-bold tracking-widest text-text-1">
-                  CHRONOSOLE // TTY
-                </div>
-
-                <div className="flex flex-1 items-end h-full gap-1 pt-2 border-l border-border-main pl-2">
-                  {tabs.map((tab, i) => {
-                    const isActive = tab.id === activeId;
-                    return (
-                      <div
-                        key={tab.id}
-                        onClick={() => setActiveId(tab.id)}
-                        className={`group flex items-center gap-3 px-4 h-full min-w-[120px] cursor-pointer transition-colors relative ${isActive
-                          ? 'bg-bg-base text-text-1 rounded-t-lg z-10 border-t-2 border-accent'
-                          : 'bg-transparent hover:bg-bg-raised text-text-3 border-t-2 border-transparent'
-                          }`}
-                      >
-                        {isActive && (
-                          <div className="absolute inset-x-0 top-0 h-[1px] shadow-[0_0_12px_1px_var(--accent)] opacity-40 pointer-events-none" />
-                        )}
-                        <span className={`text-[8px] ${tab.status === 'connected' ? 'text-accent' : 'text-text-3'}`}>■</span>
-                        <span className="text-xs sm:text-sm font-mono font-semibold">{tab.label}</span>
-                        {i < 9 && (
-                          <span className={`text-[10px] border px-1 rounded transition-opacity ${isActive ? 'border-text-3 opacity-100' : 'border-border-main opacity-0 group-hover:opacity-100'
-                            }`}>
-                            ^{i + 1}
-                          </span>
-                        )}
-                        {tabs.length > 1 && (
-                          <span className="ml-auto text-xs opacity-0 group-hover:opacity-100 hover:text-accent transition-all" onClick={(e) => closeTab(e, tab.id)}>✕</span>
-                        )}
-                      </div>
-                    );
-                  })}
-                  <button onClick={addTab} className="h-full px-4 text-text-3 hover:text-text-1 transition-colors mb-1">
-                    +
-                  </button>
-                </div>
-
-                <div className="hidden lg:flex items-center h-full px-4 gap-6 font-mono text-[11px] text-text-2 border-l border-border-main">
-                  <div className="flex items-center gap-2">
-                    <span className="text-accent text-[8px]">{statusConfig.icon}</span>
-                    <span className="text-accent tracking-wider">{statusConfig.label}</span>
-                  </div>
-                  <div className="tracking-wider">{date} // {time}</div>
-                  <ThemeToggle />
-                </div>
+      <div className="flex-1 flex flex-col min-w-0 bg-bg-surface">
+        <div className="flex-1 flex flex-col bg-bg-base relative overflow-hidden">
+          <div className="flex flex-col h-full">
+            <div className="flex h-12 bg-bg-surface shrink-0 items-end px-4 gap-2 overflow-x-auto no-scrollbar border-b border-border-main">
+              <div className="flex items-center h-full pr-6 text-sm font-bold tracking-widest text-text-1">
+                CHRONOSOLE // TTY
               </div>
 
-              <div className="flex-1 relative bg-bg-base">
-                {tabs.map((tab) => (
-                  <div
-                    key={tab.id}
-                    className={`absolute inset-0 p-4 transition-opacity duration-200 ${tab.id === activeId ? 'opacity-100 pointer-events-auto z-10' : 'opacity-0 pointer-events-none z-0'
-                      }`}
-                  >
-                    <div ref={setMountRef(tab.id)} className="w-full h-full" />
-                  </div>
-                ))}
+              <div className="flex flex-1 items-end h-full gap-1 pt-2 border-l border-border-main pl-2">
+                {tabs.map((tab, i) => {
+                  const isActive = tab.id === activeId;
+                  return (
+                    <div
+                      key={tab.id}
+                      onClick={() => setActiveId(tab.id)}
+                      className={`group flex items-center gap-3 px-4 h-full min-w-[120px] cursor-pointer transition-colors relative ${isActive
+                        ? 'bg-bg-base text-text-1 rounded-t-lg z-10 border-t-2 border-accent'
+                        : 'bg-transparent hover:bg-bg-raised text-text-3 border-t-2 border-transparent'
+                        }`}
+                    >
+                      {isActive && (
+                        <div className="absolute inset-x-0 top-0 h-[1px] shadow-[0_0_12px_1px_var(--accent)] opacity-40 pointer-events-none" />
+                      )}
+                      <span className={`text-[8px] ${tab.status === 'connected' ? 'text-accent' : 'text-text-3'}`}>■</span>
+                      <span className="text-sm font-mono font-semibold">{tab.label}</span>
+                      {i < 9 && (
+                        <span className={`text-[10px] border px-1 rounded transition-opacity ${isActive ? 'border-text-3 opacity-100' : 'border-border-main opacity-0 group-hover:opacity-100'
+                          }`}>
+                          ^{i + 1}
+                        </span>
+                      )}
+                      {tabs.length > 1 && (
+                        <span className="ml-auto text-xs opacity-0 group-hover:opacity-100 hover:text-accent transition-all" onClick={(e) => closeTab(e, tab.id)}>✕</span>
+                      )}
+                    </div>
+                  );
+                })}
+                <button onClick={addTab} className="h-full px-4 text-text-3 hover:text-text-1 transition-colors mb-1">
+                  +
+                </button>
               </div>
 
-              <div className="flex h-8 border-t border-border-main bg-bg-surface shrink-0 items-center px-4 justify-between font-mono text-[11px] text-text-3 tracking-widest overflow-x-auto no-scrollbar">
-                <div className="flex items-center gap-6 whitespace-nowrap">
-                  <div>ENV: <span className="text-accent font-bold">PRODUCTION</span></div>
-                  <div>ENC: <span className="text-text-1 font-bold">UTF-8</span></div>
-                  <div className="flex items-center gap-4 pl-6 border-l border-border-main">
-                    <div className="flex items-center gap-2"><span className="border border-border-main px-1.5 rounded text-text-1 bg-bg-base">^C</span> INT</div>
-                    <div className="flex items-center gap-2"><span className="border border-border-main px-1.5 rounded text-text-1 bg-bg-base">^D</span> EOF</div>
-                    <div className="flex items-center gap-2"><span className="border border-border-main px-1.5 rounded text-text-1 bg-bg-base">^T</span> NEW</div>
-                  </div>
+              <div className="hidden lg:flex items-center h-full px-4 gap-6 font-mono text-[11px] text-text-2 border-l border-border-main">
+                <div className="flex items-center gap-2">
+                  <span className="text-accent text-[8px]">{statusConfig.icon}</span>
+                  <span className="text-accent tracking-wider">{statusConfig.label}</span>
                 </div>
-                <div className="flex items-center gap-2 whitespace-nowrap pl-4">
-                  <span className="text-accent text-[10px]">∿</span>
-                  WS // ACTIVE: {tabs.findIndex((t) => t.id === activeId) + 1}/{tabs.length}
-                </div>
+                <div className="tracking-wider">{date} // {time}</div>
+                <ThemeToggle />
               </div>
             </div>
-          )}
 
+            <div className="flex-1 relative bg-bg-base overflow-hidden">
+              {tabs.map((tab) => (
+                <div
+                  key={tab.id}
+                  className={`absolute inset-0 transition-opacity duration-200 ${tab.id === activeId ? 'opacity-100 pointer-events-auto z-10' : 'opacity-0 pointer-events-none z-0'
+                    }`}
+                >
+                  <div ref={setMountRef(tab.id)} className="w-full h-full" />
+                </div>
+              ))}
+            </div>
+
+            <div className="flex h-8 border-t border-border-main bg-bg-surface shrink-0 items-center px-4 justify-between font-mono text-[11px] text-text-3 tracking-widest overflow-x-auto no-scrollbar">
+              <div className="flex items-center gap-6 whitespace-nowrap">
+                <div>ENV: <span className="text-accent font-bold">PRODUCTION</span></div>
+                <div>ENC: <span className="text-text-1 font-bold">UTF-8</span></div>
+                <div className="flex items-center gap-4 pl-6 border-l border-border-main">
+                  <div className="flex items-center gap-2"><span className="border border-border-main px-1.5 rounded text-text-1 bg-bg-base">^C</span> INT</div>
+                  <div className="flex items-center gap-2"><span className="border border-border-main px-1.5 rounded text-text-1 bg-bg-base">^D</span> EOF</div>
+                  <div className="flex items-center gap-2"><span className="border border-border-main px-1.5 rounded text-text-1 bg-bg-base">^T</span> NEW</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 whitespace-nowrap pl-4">
+                <span className="text-accent text-[10px]">∿</span>
+                WS // ACTIVE: {tabs.findIndex((t) => t.id === activeId) + 1}/{tabs.length}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
