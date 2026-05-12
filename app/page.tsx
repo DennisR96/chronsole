@@ -4,7 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import '@xterm/xterm/css/xterm.css';
 import { useTheme } from 'next-themes';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
-import { Sidebar } from '@/components/Sidebar';
+import { Sidebar, SidebarTab } from '@/components/Sidebar';
+import { FileTree, FileNode } from '@/components/FileTree';
 
 type TabStatus = 'connecting' | 'connected' | 'disconnected';
 
@@ -24,9 +25,42 @@ interface TabResources {
 let tabCounter = 0;
 const newTabId = () => `tab-${++tabCounter}`;
 
+const mockFileSystem: FileNode[] = [
+  {
+    id: 'root', name: 'CHRONOSOLE_WORKSPACE', type: 'folder',
+    children: [
+      {
+        id: 'app', name: 'app', type: 'folder', children: [
+          { id: 'page.tsx', name: 'page.tsx', type: 'file' },
+          { id: 'layout.tsx', name: 'layout.tsx', type: 'file' },
+          { id: 'globals.css', name: 'globals.css', type: 'file' },
+        ]
+      },
+      {
+        id: 'components', name: 'components', type: 'folder', children: [
+          { id: 'Sidebar.tsx', name: 'Sidebar.tsx', type: 'file' },
+          { id: 'FileTree.tsx', name: 'FileTree.tsx', type: 'file' },
+          {
+            id: 'theme', name: 'theme', type: 'folder', children: [
+              { id: 'ThemeToggle.tsx', name: 'ThemeToggle.tsx', type: 'file' },
+              { id: 'ThemeProvider.tsx', name: 'ThemeProvider.tsx', type: 'file' },
+            ]
+          },
+        ]
+      },
+      { id: 'README.md', name: 'README.md', type: 'file' },
+      { id: 'package.json', name: 'package.json', type: 'file' },
+      { id: 'next.config.ts', name: 'next.config.ts', type: 'file' },
+    ]
+  }
+];
+
 export default function TerminalPage() {
   const { theme, resolvedTheme } = useTheme();
   const currentTheme = resolvedTheme || theme;
+
+  const [activeSidebarTab, setActiveSidebarTab] = useState<SidebarTab>('terminal');
+  const [activeFile, setActiveFile] = useState<string>('page.tsx');
 
   const [tabs, setTabs] = useState<Tab[]>(() => [{ id: newTabId(), label: 'TTY1', status: 'connecting' }]);
   const [activeId, setActiveId] = useState<string>(() => tabs[0].id);
@@ -219,7 +253,7 @@ export default function TerminalPage() {
   useEffect(() => {
     const res = resources.current.get(activeId);
     if (res) requestAnimationFrame(() => { res.fit(); res.focus(); });
-  }, [activeId]);
+  }, [activeId, activeSidebarTab]);
 
   const addTab = () => {
     const id = newTabId();
@@ -255,7 +289,23 @@ export default function TerminalPage() {
 
   return (
     <div className="flex h-[100dvh] w-full bg-background overflow-hidden">
-      <Sidebar />
+
+      <Sidebar activeTab={activeSidebarTab} onTabChange={setActiveSidebarTab} />
+
+      {activeSidebarTab === 'files' && (
+        <div className="w-64 shrink-0 bg-bg-surface border-r border-border-main flex flex-col z-10 transition-all duration-300">
+          <div className="h-12 border-b border-border-main flex items-center px-4 font-mono text-[11px] font-bold tracking-widest text-text-2 shrink-0">
+            EXPLORER
+          </div>
+          <div className="flex-1 overflow-y-auto py-2 custom-scrollbar">
+            <FileTree
+              data={mockFileSystem}
+              activeFileId={activeFile}
+              onSelectFile={setActiveFile}
+            />
+          </div>
+        </div>
+      )}
 
       <div className="flex-1 flex flex-col min-w-0 bg-bg-surface p-2 sm:p-4 pl-0 sm:pl-0">
         <div className="flex-1 flex flex-col border border-border-main rounded-xl overflow-hidden shadow-2xl bg-bg-base relative">
@@ -273,8 +323,8 @@ export default function TerminalPage() {
                     key={tab.id}
                     onClick={() => setActiveId(tab.id)}
                     className={`group flex items-center gap-3 px-4 h-full min-w-[120px] cursor-pointer transition-colors relative ${isActive
-                      ? 'bg-bg-base text-text-1 rounded-t-lg z-10 border-t-2 border-accent'
-                      : 'bg-transparent hover:bg-bg-raised text-text-3 border-t-2 border-transparent'
+                        ? 'bg-bg-base text-text-1 rounded-t-lg z-10 border-t-2 border-accent'
+                        : 'bg-transparent hover:bg-bg-raised text-text-3 border-t-2 border-transparent'
                       }`}
                   >
                     {isActive && (

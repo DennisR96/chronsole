@@ -1,31 +1,42 @@
-import {
-  Zap,
-  TerminalSquare,
-  Folder,
-  Settings,
-  Clock,
-  LineChart,
-  Box,
-  Activity
-} from 'lucide-react';
+import { Zap, TerminalSquare, Folder, Settings, Clock, LineChart, Box, Activity } from 'lucide-react';
 
-export function Sidebar() {
+export type SidebarTab = 'terminal' | 'files' | 'settings' | 'history' | 'metrics' | 'packages' | 'activity';
+
+interface SidebarProps {
+  activeTab: SidebarTab;
+  onTabChange: (tab: SidebarTab) => void;
+}
+
+export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
+  const NavIcon = ({ tab, Icon }: { tab: SidebarTab, Icon: any }) => {
+    const isActive = activeTab === tab;
+    return (
+      <div
+        onClick={() => onTabChange(tab)}
+        className={`w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-all ${isActive
+            ? 'bg-bg-base text-accent border border-accent/30 shadow-[0_0_10px_rgba(204,255,0,0.1)]'
+            : 'text-text-3 hover:text-text-1 hover:bg-bg-raised border border-transparent'
+          }`}
+      >
+        <Icon size={20} strokeWidth={isActive ? 2 : 1.5} />
+      </div>
+    );
+  };
+
   return (
     <aside className="w-16 shrink-0 flex flex-col items-center py-4 bg-bg-surface border-r border-border-main z-20 h-full justify-between">
       <div className="text-accent mb-6 mt-2">
         <Zap size={22} fill="currentColor" />
       </div>
 
-      <div className="flex flex-col gap-6 w-full items-center flex-1">
-        <div className="w-10 h-10 rounded-xl bg-bg-base flex items-center justify-center text-accent border border-accent/30 cursor-pointer shadow-[0_0_10px_rgba(204,255,0,0.1)] transition-all">
-          <TerminalSquare size={20} strokeWidth={2} />
-        </div>
-        <Folder size={20} className="text-text-3 hover:text-text-1 cursor-pointer transition-colors" />
-        <Settings size={20} className="text-text-3 hover:text-text-1 cursor-pointer transition-colors" />
-        <Clock size={20} className="text-text-3 hover:text-text-1 cursor-pointer transition-colors" />
-        <LineChart size={20} className="text-text-3 hover:text-text-1 cursor-pointer transition-colors" />
-        <Box size={20} className="text-text-3 hover:text-text-1 cursor-pointer transition-colors" />
-        <Activity size={20} className="text-text-3 hover:text-text-1 cursor-pointer transition-colors" />
+      <div className="flex flex-col gap-4 w-full items-center flex-1">
+        <NavIcon tab="terminal" Icon={TerminalSquare} />
+        <NavIcon tab="files" Icon={Folder} />
+        <NavIcon tab="settings" Icon={Settings} />
+        <NavIcon tab="history" Icon={Clock} />
+        <NavIcon tab="metrics" Icon={LineChart} />
+        <NavIcon tab="packages" Icon={Box} />
+        <NavIcon tab="activity" Icon={Activity} />
       </div>
 
       <div className="w-10 h-10 rounded-full border border-border-main flex items-center justify-center text-text-1 font-bold mb-2 cursor-pointer relative hover:border-accent transition-colors">
