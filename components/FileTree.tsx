@@ -1,93 +1,117 @@
-// components/FileTree.tsx
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { ChevronRight, ChevronDown, File, Folder as FolderIcon, FileCode, FileText, FileImage } from 'lucide-react';
+import { useState } from 'react';
 
-export type FileNode = {
+export interface FileNode {
   id: string;
   name: string;
   type: 'file' | 'folder';
   children?: FileNode[];
-};
+}
 
-const getFileIcon = (name: string) => {
-  if (name.endsWith('.tsx') || name.endsWith('.ts') || name.endsWith('.js')) return <FileCode size={14} />;
-  if (name.endsWith('.md') || name.endsWith('.txt')) return <FileText size={14} />;
-  if (name.endsWith('.png') || name.endsWith('.jpg') || name.endsWith('.svg')) return <FileImage size={14} />;
-  return <File size={14} />;
-};
-
-export function FileTree({ data, depth = 0, activeFileId, onSelectFile }: {
+interface FileTreeProps {
   data: FileNode[];
-  depth?: number;
-  activeFileId?: string;
-  onSelectFile?: (id: string) => void;
-}) {
-  const [openFolders, setOpenFolders] = useState<Set<string>>(new Set());
+  activeFileId: string;
+  onSelectFile: (path: string) => void;
+}
 
-  useEffect(() => {
-    if (depth === 0 && data.length > 0) {
-      setOpenFolders((prev) => {
-        if (prev.size === 0) {
-          return new Set([data[0].id]);
-        }
-        return prev;
-      });
+export function FileTree({ data, activeFileId, onSelectFile }: FileTreeProps) {
+  return (
+    <div className="text-sm font-mono text-text-2 flex flex-col gap-1">
+      {data.map((node) => (
+        <TreeNode
+          key={node.id}
+          node={node}
+          activeFileId={activeFileId}
+          onSelectFile={onSelectFile}
+          level={0}
+        />
+      ))}
+    </div>
+  );
+}
+
+interface TreeNodeProps {
+  node: FileNode;
+  activeFileId: string;
+  onSelectFile: (path: string) => void;
+  level: number;
+}
+
+function TreeNode({ node, activeFileId, onSelectFile, level }: TreeNodeProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [children, setChildren] = useState<FileNode[]>(node.children || []);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const isFolder = node.type === 'folder';
+  const isActive = activeFileId === node.id;
+
+  const handleToggle = async () => {
+    if (!isFolder) {
+      onSelectFile(node.id);
+      return;
     }
-  }, [data, depth]);
 
-  const toggleFolder = (id: string) => {
-    setOpenFolders(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    // If opening the folder and we haven't loaded its children yet
+    if (!isOpen && children.length === 0) {
+      setIsLoading(true);
+      try {
+        const res = await fetch(`/api/files?path=${encodeURIComponent(node.id)}`);
+        if (!res.ok) throw new Error('Failed to load folder');
+        const data = await res.json();
+        setChildren(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    setIsOpen(!isOpen);
   };
 
   return (
-    <div className="flex flex-col font-mono text-[13px] select-none">
-      {data.map((node) => {
-        const isOpen = openFolders.has(node.id);
-        const isSelected = activeFileId === node.id;
+    <div className="flex flex-col">
+      <div
+        onClick={handleToggle}
+        style={{ paddingLeft: `${level * 12}px` }}
+        className={`flex items-center gap-2 py-1 px-2 cursor-pointer rounded hover:bg-bg-hover select-none transition-colors ${isActive ? 'bg-bg-hover text-text-1 font-bold' : ''
+          }`}
+      >
+        {isFolder ? (
+          <span className="w-4 h-4 flex items-center justify-center text-text-3">
+            {isLoading ? '⟳' : isOpen ? '▼' : '▶'}
+          </span>
+        ) : (
+          <span className="w-4 h-4 flex items-center justify-center text-text-3">
+            📄
+          </span>
+        )}
+        <span className="truncate">{node.name}</span>
+      </div>
 
-        if (node.type === 'folder') {
-          return (
-            <div key={node.id} className="flex flex-col">
-              <div
-                className="flex items-center gap-1.5 py-1 px-2 hover:bg-bg-raised text-text-2 hover:text-text-1 cursor-pointer transition-colors"
-                style={{ paddingLeft: `${depth * 12 + 8}px` }}
-                onClick={() => toggleFolder(node.id)}
-              >
-                {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                <FolderIcon size={14} className={isOpen ? 'text-accent' : 'text-text-3'} fill={isOpen ? 'currentColor' : 'none'} fillOpacity={0.2} />
-                <span className="truncate tracking-wide">{node.name}</span>
-              </div>
-              {isOpen && node.children && (
-                <FileTree data={node.children} depth={depth + 1} activeFileId={activeFileId} onSelectFile={onSelectFile} />
-              )}
+      {isFolder && isOpen && (
+        <div className="flex flex-col mt-1">
+          {children.length === 0 && !isLoading ? (
+            <div
+              style={{ paddingLeft: `${(level + 1) * 12 + 16}px` }}
+              className="py-1 text-text-3 italic text-xs"
+            >
+              Empty folder
             </div>
-          );
-        }
-
-        return (
-          <div
-            key={node.id}
-            className={`flex items-center gap-2 py-1 px-2 cursor-pointer transition-colors border-l-[3px] ${isSelected
-              ? 'bg-accent/10 text-accent border-accent'
-              : 'text-text-3 hover:bg-bg-raised hover:text-text-1 border-transparent'
-              }`}
-            style={{ paddingLeft: `${depth * 12 + 20}px` }}
-            onClick={() => onSelectFile?.(node.id)}
-          >
-            <span className={isSelected ? 'text-accent' : 'text-text-3'}>
-              {getFileIcon(node.name)}
-            </span>
-            <span className="truncate tracking-wide">{node.name}</span>
-          </div>
-        );
-      })}
+          ) : (
+            children.map((childNode) => (
+              <TreeNode
+                key={childNode.id}
+                node={childNode}
+                activeFileId={activeFileId}
+                onSelectFile={onSelectFile}
+                level={level + 1}
+              />
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 }

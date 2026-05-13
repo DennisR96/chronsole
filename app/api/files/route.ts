@@ -1,59 +1,31 @@
-// app/api/files/route.ts
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
 
-interface FileNode {
-  id: string;
-  name: string;
-  type: 'file' | 'folder';
-  children?: FileNode[];
-}
-
-/**
- * Recursively walks the directory structure.
- */
-async function walk(dir: string, depth = 0): Promise<FileNode | null> {
-  if (depth > 5) return null;
-
-  const name = path.basename(dir) || dir;
-  if (name === 'node_modules' || name === '.git' || name === '.next') {
-    return null;
-  }
-
+export async function GET(request: NextRequest) {
   try {
-    const stats = await fs.stat(dir);
+    const searchParams = request.nextUrl.searchParams;
+    const requestedPath = searchParams.get('path');
 
-    if (!stats.isDirectory()) {
-      return { id: dir, name, type: 'file' };
-    }
+    const targetPath = requestedPath || '/';
+    const entries = await fs.readdir(targetPath, { withFileTypes: true });
 
-    const entries = await fs.readdir(dir, { withFileTypes: true });
-    const children: FileNode[] = [];
+    const fileSystem = entries.map((entry) => {
+      const isFolder = entry.isDirectory();
 
-    for (const entry of entries) {
-      const fullPath = path.join(dir, entry.name);
-      if (entry.isDirectory()) {
-        const childNode = await walk(fullPath, depth + 1);
-        if (childNode) children.push(childNode);
-      } else {
-        children.push({ id: fullPath, name: entry.name, type: 'file' });
-      }
-    }
-
-    children.sort((a, b) => {
-      if (a.type === b.type) return a.name.localeCompare(b.name);
-      return a.type === 'folder' ? -1 : 1;
+      return {
+        id: path.join(targetPath, entry.name),
+        name: entry.name,
+        type: isFolder ? 'folder' : 'file',
+        children: isFolder ? [] : undefined,
+      };
     });
 
-    return { id: dir, name, type: 'folder', children };
+    return NextResponse.json(fileSystem);
   } catch (error) {
-    return null;
+    return NextResponse.json(
+      { error: 'Failed to read directory' },
+      { status: 500 }
+    );
   }
-}
-
-export async function GET() {
-  const rootPath = process.cwd();
-  const tree = await walk(rootPath);
-  return NextResponse.json(tree ? [tree] : []);
 }
