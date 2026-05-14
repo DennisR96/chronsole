@@ -2,10 +2,24 @@
   "name": "chronsole",
   "version": "0.1.0",
   "private": true,
+  "main": "electron/main.js",
   "scripts": {
+    "postinstall": "electron-builder install-app-deps",
+
     "dev": "node server.js",
+    "dev:next": "node server.js",
+    "dev:electron": "wait-on http://localhost:3000 && electron .",
+    "electron": "concurrently -k \"npm run dev:next\" \"npm run dev:electron\"",
+
     "build": "next build",
-    "start": "NODE_ENV=production node server.js",
+    "start": "cross-env NODE_ENV=production node server.js",
+    "start:next": "cross-env NODE_ENV=production node server.js",
+
+    "dist": "npm run build && electron-builder",
+    "dist:mac": "npm run build && electron-builder --mac",
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:linux": "npm run build && electron-builder --linux",
+
     "lint": "eslint"
   },
   "dependencies": {
@@ -48,9 +62,52 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
+    "electron": "^36.0.0",
+    "electron-builder": "^26.0.12",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wait-on": "^8.0.3"
+  },
+  "build": {
+    "appId": "com.chronosole.app",
+    "productName": "CHRONOSOLE",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "electron/**/*",
+      "server.js",
+      ".next/**/*",
+      "public/**/*",
+      "package.json",
+      "next.config.ts",
+      "node_modules/**/*"
+    ],
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/node-pty/**/*",
+      "node_modules/playwright/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": [
+        "dmg"
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Development"
+    }
   }
 }

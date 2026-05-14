@@ -47,14 +47,16 @@ export default function TerminalComponent({ isActive }: TerminalProps) {
     });
 
     term.attachCustomKeyEventHandler((e: KeyboardEvent) => {
-      if (e.ctrlKey && !e.altKey && !e.metaKey) {
-        if (e.key.toLowerCase() === 't') {
+      if (e.metaKey && !e.ctrlKey && !e.altKey) {
+        const key = e.key.toLowerCase();
+
+        if (key === "t" || key === "w" || (e.key >= "1" && e.key <= "9")) {
           return false;
         }
       }
+
       return true;
     });
-
     const fitAddon = new FitAddon();
     fitAddonRef.current = fitAddon;
     term.loadAddon(fitAddon);

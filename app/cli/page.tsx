@@ -1,12 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import '@xterm/xterm/css/xterm.css';
-import { useTheme } from 'next-themes';
-import { ThemeToggle } from '@/components/theme/ThemeToggle';
-import { Sidebar } from '@/components/Sidebar';
+import { useCallback, useEffect, useRef, useState } from "react";
+import "@xterm/xterm/css/xterm.css";
+import { useTheme } from "next-themes";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { Sidebar } from "@/components/Sidebar";
 
-type TabStatus = 'connecting' | 'connected' | 'disconnected';
+type TabStatus = "connecting" | "connected" | "disconnected";
 
 interface Tab {
   id: string;
@@ -28,26 +28,99 @@ export default function TerminalPage() {
   const { theme, resolvedTheme } = useTheme();
   const currentTheme = resolvedTheme || theme;
 
-  const [tabs, setTabs] = useState<Tab[]>(() => [{ id: newTabId(), label: 'TTY1', status: 'connecting' }]);
+  const [tabs, setTabs] = useState<Tab[]>(() => [
+    { id: newTabId(), label: "TTY1", status: "connecting" },
+  ]);
+
   const [activeId, setActiveId] = useState<string>(() => tabs[0].id);
-  const [time, setTime] = useState('');
-  const [date, setDate] = useState('');
+  const [time, setTime] = useState("");
+  const [date, setDate] = useState("");
 
   const mountRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const resources = useRef<Map<string, TabResources>>(new Map());
   const initialized = useRef<Set<string>>(new Set());
   const tabsRef = useRef<Tab[]>(tabs);
+  const activeIdRef = useRef<string>(activeId);
 
-  useEffect(() => { tabsRef.current = tabs; }, [tabs]);
+  useEffect(() => {
+    tabsRef.current = tabs;
+  }, [tabs]);
+
+  useEffect(() => {
+    activeIdRef.current = activeId;
+  }, [activeId]);
+
+  const disposeTab = useCallback((tabId: string) => {
+    resources.current.get(tabId)?.dispose();
+    resources.current.delete(tabId);
+    initialized.current.delete(tabId);
+    mountRefs.current.delete(tabId);
+  }, []);
+
+  const addTab = useCallback(() => {
+    const id = newTabId();
+
+    setTabs((prev) => [
+      ...prev,
+      {
+        id,
+        label: `TTY${prev.length + 1}`,
+        status: "connecting",
+      },
+    ]);
+
+    setActiveId(id);
+  }, []);
+
+  const closeTabById = useCallback(
+    (tabId: string) => {
+      const currentTabs = tabsRef.current;
+
+      if (currentTabs.length <= 1) return;
+
+      disposeTab(tabId);
+
+      setTabs((prev) => {
+        const idx = prev.findIndex((t) => t.id === tabId);
+        const next = prev.filter((t) => t.id !== tabId);
+
+        if (tabId === activeIdRef.current && next.length > 0) {
+          setActiveId(next[Math.min(idx, next.length - 1)].id);
+        }
+
+        return next;
+      });
+    },
+    [disposeTab]
+  );
 
   // Handle system clock ticking
   useEffect(() => {
     const tick = () => {
       const now = new Date();
-      setTime(now.toLocaleTimeString('en-GB', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-      setDate(now.toLocaleDateString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '.'));
+
+      setTime(
+        now.toLocaleTimeString("en-GB", {
+          hour12: false,
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        })
+      );
+
+      setDate(
+        now
+          .toLocaleDateString("en-GB", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+          })
+          .replace(/\//g, ".")
+      );
     };
+
     tick();
+
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, []);
@@ -55,210 +128,287 @@ export default function TerminalPage() {
   // Key handlers
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (!e.ctrlKey || e.altKey || e.metaKey) return;
-      if (e.key.toLowerCase() === 't') {
+      if (!e.metaKey || e.ctrlKey || e.altKey) return;
+
+      const key = e.key.toLowerCase();
+
+      if (key === "t") {
         e.preventDefault();
-        const id = newTabId();
-        setTabs((prev) => [...prev, { id, label: `TTY${prev.length + 1}`, status: 'connecting' }]);
-        setActiveId(id);
+        addTab();
         return;
       }
-      const n = parseInt(e.key, 10);
-      if (isNaN(n) || n < 1 || n > 9) return;
-      const target = tabsRef.current[n - 1];
-      if (target) {
+
+      if (key === "w") {
         e.preventDefault();
-        setActiveId(target.id);
+        closeTabById(activeIdRef.current);
+        return;
+      }
+
+      const n = parseInt(e.key, 10);
+
+      if (!isNaN(n) && n >= 1 && n <= 9) {
+        const target = tabsRef.current[n - 1];
+
+        if (target) {
+          e.preventDefault();
+          setActiveId(target.id);
+        }
       }
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
 
-  const bootTerminal = useCallback((tabId: string, el: HTMLDivElement) => {
-    if (initialized.current.has(tabId)) return;
-    initialized.current.add(tabId);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [addTab, closeTabById]);
 
-    const isDark = currentTheme === 'dark';
+  const bootTerminal = useCallback(
+    (tabId: string, el: HTMLDivElement) => {
+      if (initialized.current.has(tabId)) return;
+      initialized.current.add(tabId);
 
-    Promise.all([import('@xterm/xterm'), import('@xterm/addon-fit'), import('xterm-addon-image')]).then(
-      ([{ Terminal }, { FitAddon }, { ImageAddon }]) => {
+      const isDark = currentTheme === "dark";
+
+      Promise.all([
+        import("@xterm/xterm"),
+        import("@xterm/addon-fit"),
+        import("xterm-addon-image"),
+      ]).then(([{ Terminal }, { FitAddon }, { ImageAddon }]) => {
         const term = new Terminal({
           cursorBlink: false,
-          cursorStyle: 'block',
+          cursorStyle: "block",
           theme: {
-            background: isDark ? '#0A0A0C' : '#FFFFFF',
-            foreground: isDark ? '#FFFFFF' : '#000000',
-            cursor: isDark ? '#CCFF00' : '#FF3300',
-            cursorAccent: isDark ? '#000000' : '#FFFFFF',
-            selectionBackground: isDark ? '#CCFF0033' : '#FF330033',
-            black: isDark ? '#0A0A0C' : '#000000',
-            red: '#FF3300',
-            green: '#CCFF00',
-            yellow: '#FFD700',
-            blue: '#0055FF',
-            magenta: '#FF00FF',
-            cyan: '#00FFFF',
-            white: isDark ? '#FFFFFF' : '#F0F0EB',
-            brightBlack: '#55555A',
-            brightRed: '#FF6633',
-            brightGreen: '#D4FF33',
-            brightYellow: '#FFEA00',
-            brightBlue: '#3377FF',
-            brightMagenta: '#FF33FF',
-            brightCyan: '#33FFFF',
-            brightWhite: '#FFFFFF',
+            background: isDark ? "#0A0A0C" : "#FFFFFF",
+            foreground: isDark ? "#FFFFFF" : "#000000",
+            cursor: isDark ? "#CCFF00" : "#FF3300",
+            cursorAccent: isDark ? "#000000" : "#FFFFFF",
+            selectionBackground: isDark ? "#CCFF0033" : "#FF330033",
+            black: isDark ? "#0A0A0C" : "#000000",
+            red: "#FF3300",
+            green: "#CCFF00",
+            yellow: "#FFD700",
+            blue: "#0055FF",
+            magenta: "#FF00FF",
+            cyan: "#00FFFF",
+            white: isDark ? "#FFFFFF" : "#F0F0EB",
+            brightBlack: "#55555A",
+            brightRed: "#FF6633",
+            brightGreen: "#D4FF33",
+            brightYellow: "#FFEA00",
+            brightBlue: "#3377FF",
+            brightMagenta: "#FF33FF",
+            brightCyan: "#33FFFF",
+            brightWhite: "#FFFFFF",
           },
-          fontFamily: '"JetBrainsMono Nerd Font", "JetBrainsMonoNL Nerd Font", var(--font-mono), "JetBrains Mono", monospace',
+          fontFamily:
+            '"JetBrainsMono Nerd Font", "JetBrainsMonoNL Nerd Font", var(--font-mono), "JetBrains Mono", monospace',
           fontSize: 14,
-          fontWeight: '500',
+          fontWeight: "500",
           lineHeight: 1.5,
           letterSpacing: 0,
           scrollback: 10000,
         });
 
         term.attachCustomKeyEventHandler((e: KeyboardEvent) => {
-          if (e.ctrlKey && !e.altKey && !e.metaKey) {
-            if (e.key.toLowerCase() === 't' || (e.key >= '1' && e.key <= '9')) {
+          if (e.metaKey && !e.ctrlKey && !e.altKey) {
+            const key = e.key.toLowerCase();
+
+            if (
+              key === "t" ||
+              key === "w" ||
+              (e.key >= "1" && e.key <= "9")
+            ) {
               return false;
             }
           }
+
           return true;
         });
 
         const fitAddon = new FitAddon();
+
         term.loadAddon(fitAddon);
         term.loadAddon(new ImageAddon());
         term.open(el);
         fitAddon.fit();
 
         const updateStatus = (s: TabStatus) =>
-          setTabs((prev) => prev.map((t) => (t.id === tabId ? { ...t, status: s } : t)));
+          setTabs((prev) =>
+            prev.map((t) => (t.id === tabId ? { ...t, status: s } : t))
+          );
 
         const sendSize = (sock: WebSocket) => {
           if (sock.readyState === WebSocket.OPEN) {
-            try { sock.send(JSON.stringify({ type: 'resize', cols: term.cols, rows: term.rows })); } catch { }
+            try {
+              sock.send(
+                JSON.stringify({
+                  type: "resize",
+                  cols: term.cols,
+                  rows: term.rows,
+                })
+              );
+            } catch { }
           }
         };
 
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
         const socket = new WebSocket(`${protocol}//${window.location.host}/ws`);
 
         socket.onopen = () => {
-          updateStatus('connected');
+          updateStatus("connected");
+
           requestAnimationFrame(() => {
-            try { fitAddon.fit(); } catch { }
+            try {
+              fitAddon.fit();
+            } catch { }
+
             sendSize(socket);
           });
-          term.write(`\r\n\x1b[1m\x1b[38;5;${isDark ? '190' : '202'}m[SYS_READY]\x1b[0m CONNECTION ESTABLISHED \r\n`);
+
+          term.write(
+            `\r\n\x1b[1m\x1b[38;5;${isDark ? "190" : "202"
+            }m[SYS_READY]\x1b[0m CONNECTION ESTABLISHED \r\n`
+          );
           term.write(`\x1b[90m----------------------------------------\x1b[0m\r\n\r\n`);
         };
-        socket.onmessage = (e) => term.write(e.data);
-        socket.onclose = () => {
-          updateStatus('disconnected');
-          term.write('\r\n\x1b[1m\x1b[31m[SYS_HALT]\x1b[0m SESSION TERMINATED\r\n');
+
+        socket.onmessage = async (e) => {
+          if (typeof e.data === "string") {
+            term.write(e.data);
+          } else if (e.data instanceof Blob) {
+            term.write(await e.data.text());
+          }
         };
 
-        term.onData((data) => { if (socket.readyState === WebSocket.OPEN) socket.send(data); });
-        term.onResize(({ cols, rows }) => {
+        socket.onclose = () => {
+          updateStatus("disconnected");
+          term.write(
+            "\r\n\x1b[1m\x1b[31m[SYS_HALT]\x1b[0m SESSION TERMINATED\r\n"
+          );
+        };
+
+        term.onData((data) => {
           if (socket.readyState === WebSocket.OPEN) {
-            try { socket.send(JSON.stringify({ type: 'resize', cols, rows })); } catch { }
+            socket.send(data);
           }
         });
 
-        const ro = new ResizeObserver(() => { try { fitAddon.fit(); } catch { } });
+        term.onResize(({ cols, rows }) => {
+          if (socket.readyState === WebSocket.OPEN) {
+            try {
+              socket.send(JSON.stringify({ type: "resize", cols, rows }));
+            } catch { }
+          }
+        });
+
+        const ro = new ResizeObserver(() => {
+          try {
+            fitAddon.fit();
+          } catch { }
+        });
+
         ro.observe(el);
 
         if (document.fonts?.ready) {
           document.fonts.ready.then(() => {
             try {
               fitAddon.fit();
+
               // Forces xterm.js to invalidate its character cache and redraw the grid
               term.refresh(0, term.rows - 1);
             } catch { }
+
             sendSize(socket);
           });
         }
 
-
-
         resources.current.set(tabId, {
           socket,
-          dispose: () => { ro.disconnect(); term.dispose(); socket.close(); },
-          fit: () => { try { fitAddon.fit(); } catch { } },
-          focus: () => { try { term.focus(); } catch { } },
+          dispose: () => {
+            ro.disconnect();
+            term.dispose();
+            socket.close();
+          },
+          fit: () => {
+            try {
+              fitAddon.fit();
+            } catch { }
+          },
+          focus: () => {
+            try {
+              term.focus();
+            } catch { }
+          },
           term,
         } as TabResources & { term: any });
-      }
-    );
-  }, [currentTheme]);
+      });
+    },
+    [currentTheme]
+  );
 
   const setMountRef = useCallback(
     (tabId: string) => (el: HTMLDivElement | null) => {
-      if (el) { mountRefs.current.set(tabId, el); bootTerminal(tabId, el); }
-      else { mountRefs.current.delete(tabId); }
+      if (el) {
+        mountRefs.current.set(tabId, el);
+        bootTerminal(tabId, el);
+      } else {
+        mountRefs.current.delete(tabId);
+      }
     },
     [bootTerminal]
   );
 
   useEffect(() => {
-    const isDark = currentTheme === 'dark';
+    const isDark = currentTheme === "dark";
+
     const newTheme = {
-      background: isDark ? '#0A0A0C' : '#FFFFFF',
-      foreground: isDark ? '#FFFFFF' : '#000000',
-      cursor: isDark ? '#CCFF00' : '#FF3300',
-      cursorAccent: isDark ? '#000000' : '#FFFFFF',
-      selectionBackground: isDark ? '#CCFF0033' : '#FF330033',
-      black: isDark ? '#0A0A0C' : '#000000',
-      red: '#FF3300',
-      green: '#CCFF00',
-      white: isDark ? '#FFFFFF' : '#F0F0EB',
-      brightBlack: '#55555A',
+      background: isDark ? "#0A0A0C" : "#FFFFFF",
+      foreground: isDark ? "#FFFFFF" : "#000000",
+      cursor: isDark ? "#CCFF00" : "#FF3300",
+      cursorAccent: isDark ? "#000000" : "#FFFFFF",
+      selectionBackground: isDark ? "#CCFF0033" : "#FF330033",
+      black: isDark ? "#0A0A0C" : "#000000",
+      red: "#FF3300",
+      green: "#CCFF00",
+      white: isDark ? "#FFFFFF" : "#F0F0EB",
+      brightBlack: "#55555A",
     };
 
-    tabs.forEach(tab => {
-      const res = resources.current.get(tab.id);
-      if (res && (res as any).term) {
-        (res as any).term.options.theme = { ...(res as any).term.options.theme, ...newTheme };
+    tabs.forEach((tab) => {
+      const res = resources.current.get(tab.id) as
+        | (TabResources & { term?: any })
+        | undefined;
+
+      if (res?.term) {
+        res.term.options.theme = {
+          ...res.term.options.theme,
+          ...newTheme,
+        };
       }
     });
   }, [currentTheme, tabs]);
 
   useEffect(() => {
     const res = resources.current.get(activeId);
-    if (res) requestAnimationFrame(() => { res.fit(); res.focus(); });
-  }, [activeId]);
 
-  const addTab = () => {
-    const id = newTabId();
-    setTabs((prev) => [...prev, { id, label: `TTY${prev.length + 1}`, status: 'connecting' }]);
-    setActiveId(id);
-  };
+    if (res) {
+      requestAnimationFrame(() => {
+        res.fit();
+        res.focus();
+      });
+    }
+  }, [activeId]);
 
   const closeTab = (e: React.MouseEvent, tabId: string) => {
     e.stopPropagation();
-    resources.current.get(tabId)?.dispose();
-    resources.current.delete(tabId);
-    initialized.current.delete(tabId);
-    mountRefs.current.delete(tabId);
-
-    setTabs((prev) => {
-      const next = prev.filter((t) => t.id !== tabId);
-      if (tabId === activeId && next.length > 0) {
-        const idx = prev.findIndex((t) => t.id === tabId);
-        setActiveId(next[Math.min(idx, next.length - 1)].id);
-      }
-      return next;
-    });
+    closeTabById(tabId);
   };
 
   const activeTab = tabs.find((t) => t.id === activeId);
-  const status = activeTab?.status ?? 'connecting';
+  const status = activeTab?.status ?? "connecting";
 
   const statusConfig = {
-    connected: { label: 'ONLINE', icon: '■' },
-    connecting: { label: 'LINKING', icon: '▲' },
-    disconnected: { label: 'OFFLINE', icon: '▼' },
+    connected: { label: "ONLINE", icon: "■" },
+    connecting: { label: "LINKING", icon: "▲" },
+    disconnected: { label: "OFFLINE", icon: "▼" },
   }[status];
 
   return (
@@ -276,43 +426,78 @@ export default function TerminalPage() {
               <div className="flex flex-1 items-end h-full gap-1 pt-2 border-l border-border-main pl-2">
                 {tabs.map((tab, i) => {
                   const isActive = tab.id === activeId;
+
                   return (
                     <div
                       key={tab.id}
                       onClick={() => setActiveId(tab.id)}
                       className={`group flex items-center gap-3 px-4 h-full min-w-[120px] cursor-pointer transition-colors relative ${isActive
-                        ? 'bg-bg-base text-text-1 z-10 border-t-2 border-accent'
-                        : 'bg-transparent hover:bg-bg-raised text-text-3 border-t-2 border-transparent'
+                          ? "bg-bg-base text-text-1 z-10 border-t-2 border-accent"
+                          : "bg-transparent hover:bg-bg-raised text-text-3 border-t-2 border-transparent"
                         }`}
                     >
                       {isActive && (
                         <div className="absolute inset-x-0 top-0 h-[1px] shadow-[0_0_12px_1px_var(--accent)] opacity-40 pointer-events-none" />
                       )}
-                      <span className={`text-[8px] ${tab.status === 'connected' ? 'text-accent' : 'text-text-3'}`}>■</span>
-                      <span className="text-sm font-mono font-semibold">{tab.label}</span>
+
+                      <span
+                        className={`text-[8px] ${tab.status === "connected"
+                            ? "text-accent"
+                            : "text-text-3"
+                          }`}
+                      >
+                        ■
+                      </span>
+
+                      <span className="text-sm font-mono font-semibold">
+                        {tab.label}
+                      </span>
+
                       {i < 9 && (
-                        <span className={`text-[10px] border px-1 rounded transition-opacity ${isActive ? 'border-text-3 opacity-100' : 'border-border-main opacity-0 group-hover:opacity-100'
-                          }`}>
-                          ^{i + 1}
+                        <span
+                          className={`text-[10px] border px-1 rounded transition-opacity ${isActive
+                              ? "border-text-3 opacity-100"
+                              : "border-border-main opacity-0 group-hover:opacity-100"
+                            }`}
+                        >
+                          ⌘{i + 1}
                         </span>
                       )}
+
                       {tabs.length > 1 && (
-                        <span className="ml-auto text-xs opacity-0 group-hover:opacity-100 hover:text-accent transition-all" onClick={(e) => closeTab(e, tab.id)}>✕</span>
+                        <span
+                          className="ml-auto text-xs opacity-0 group-hover:opacity-100 hover:text-accent transition-all"
+                          onClick={(e) => closeTab(e, tab.id)}
+                        >
+                          ✕
+                        </span>
                       )}
                     </div>
                   );
                 })}
-                <button onClick={addTab} className="h-full px-4 text-text-3 hover:text-text-1 transition-colors mb-1">
+
+                <button
+                  onClick={addTab}
+                  className="h-full px-4 text-text-3 hover:text-text-1 transition-colors mb-1"
+                >
                   +
                 </button>
               </div>
 
               <div className="hidden lg:flex items-center h-full px-4 gap-6 font-mono text-[11px] text-text-2 border-l border-border-main">
                 <div className="flex items-center gap-2">
-                  <span className="text-accent text-[8px]">{statusConfig.icon}</span>
-                  <span className="text-accent tracking-wider">{statusConfig.label}</span>
+                  <span className="text-accent text-[8px]">
+                    {statusConfig.icon}
+                  </span>
+                  <span className="text-accent tracking-wider">
+                    {statusConfig.label}
+                  </span>
                 </div>
-                <div className="tracking-wider">{date} // {time}</div>
+
+                <div className="tracking-wider">
+                  {date} // {time}
+                </div>
+
                 <ThemeToggle />
               </div>
             </div>
@@ -321,7 +506,9 @@ export default function TerminalPage() {
               {tabs.map((tab) => (
                 <div
                   key={tab.id}
-                  className={`absolute inset-0 transition-opacity duration-200 ${tab.id === activeId ? 'opacity-100 pointer-events-auto z-10' : 'opacity-0 pointer-events-none z-0'
+                  className={`absolute inset-0 transition-opacity duration-200 ${tab.id === activeId
+                      ? "opacity-100 pointer-events-auto z-10"
+                      : "opacity-0 pointer-events-none z-0"
                     }`}
                 >
                   <div ref={setMountRef(tab.id)} className="w-full h-full" />
@@ -331,17 +518,50 @@ export default function TerminalPage() {
 
             <div className="flex h-8 border-t border-border-main bg-bg-surface shrink-0 items-center px-4 justify-between font-mono text-[11px] text-text-3 tracking-widest overflow-x-auto no-scrollbar">
               <div className="flex items-center gap-6 whitespace-nowrap">
-                <div>ENV: <span className="text-accent font-bold">PRODUCTION</span></div>
-                <div>ENC: <span className="text-text-1 font-bold">UTF-8</span></div>
+                <div>
+                  ENV:{" "}
+                  <span className="text-accent font-bold">PRODUCTION</span>
+                </div>
+
+                <div>
+                  ENC: <span className="text-text-1 font-bold">UTF-8</span>
+                </div>
+
                 <div className="flex items-center gap-4 pl-6 border-l border-border-main">
-                  <div className="flex items-center gap-2"><span className="border border-border-main px-1.5 rounded text-text-1 bg-bg-base">^C</span> INT</div>
-                  <div className="flex items-center gap-2"><span className="border border-border-main px-1.5 rounded text-text-1 bg-bg-base">^D</span> EOF</div>
-                  <div className="flex items-center gap-2"><span className="border border-border-main px-1.5 rounded text-text-1 bg-bg-base">^T</span> NEW</div>
+                  <div className="flex items-center gap-2">
+                    <span className="border border-border-main px-1.5 rounded text-text-1 bg-bg-base">
+                      ^C
+                    </span>
+                    INT
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="border border-border-main px-1.5 rounded text-text-1 bg-bg-base">
+                      ^D
+                    </span>
+                    EOF
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="border border-border-main px-1.5 rounded text-text-1 bg-bg-base">
+                      ⌘T
+                    </span>
+                    NEW
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="border border-border-main px-1.5 rounded text-text-1 bg-bg-base">
+                      ⌘W
+                    </span>
+                    CLOSE
+                  </div>
                 </div>
               </div>
+
               <div className="flex items-center gap-2 whitespace-nowrap pl-4">
                 <span className="text-accent text-[10px]">∿</span>
-                WS // ACTIVE: {tabs.findIndex((t) => t.id === activeId) + 1}/{tabs.length}
+                WS // ACTIVE: {tabs.findIndex((t) => t.id === activeId) + 1}/
+                {tabs.length}
               </div>
             </div>
           </div>
