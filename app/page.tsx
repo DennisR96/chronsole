@@ -1,366 +1,105 @@
 "use client";
+import Link from "next/link";
+import { Sidebar } from "@/components/Sidebar";
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import '@xterm/xterm/css/xterm.css';
-import { useTheme } from 'next-themes';
-import { ThemeToggle } from '@/components/theme/ThemeToggle';
-import { Sidebar } from '@/components/Sidebar';
-
-type TabStatus = 'connecting' | 'connected' | 'disconnected';
-
-interface Tab {
-  id: string;
-  label: string;
-  status: TabStatus;
-}
-
-interface TabResources {
-  socket: WebSocket | null;
-  dispose: () => void;
-  fit: () => void;
-  focus: () => void;
-}
-
-let tabCounter = 0;
-const newTabId = () => `tab-${++tabCounter}`;
-
-export default function TerminalPage() {
-  const { theme, resolvedTheme } = useTheme();
-  const currentTheme = resolvedTheme || theme;
-
-  const [tabs, setTabs] = useState<Tab[]>(() => [{ id: newTabId(), label: 'TTY1', status: 'connecting' }]);
-  const [activeId, setActiveId] = useState<string>(() => tabs[0].id);
-  const [time, setTime] = useState('');
-  const [date, setDate] = useState('');
-
-  const mountRefs = useRef<Map<string, HTMLDivElement>>(new Map());
-  const resources = useRef<Map<string, TabResources>>(new Map());
-  const initialized = useRef<Set<string>>(new Set());
-  const tabsRef = useRef<Tab[]>(tabs);
-
-  useEffect(() => { tabsRef.current = tabs; }, [tabs]);
-
-  // Handle system clock ticking
-  useEffect(() => {
-    const tick = () => {
-      const now = new Date();
-      setTime(now.toLocaleTimeString('en-GB', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-      setDate(now.toLocaleDateString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '.'));
-    };
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  // Key handlers
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (!e.ctrlKey || e.altKey || e.metaKey) return;
-      if (e.key.toLowerCase() === 't') {
-        e.preventDefault();
-        const id = newTabId();
-        setTabs((prev) => [...prev, { id, label: `TTY${prev.length + 1}`, status: 'connecting' }]);
-        setActiveId(id);
-        return;
-      }
-      const n = parseInt(e.key, 10);
-      if (isNaN(n) || n < 1 || n > 9) return;
-      const target = tabsRef.current[n - 1];
-      if (target) {
-        e.preventDefault();
-        setActiveId(target.id);
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
-
-  const bootTerminal = useCallback((tabId: string, el: HTMLDivElement) => {
-    if (initialized.current.has(tabId)) return;
-    initialized.current.add(tabId);
-
-    const isDark = currentTheme === 'dark';
-
-    Promise.all([import('@xterm/xterm'), import('@xterm/addon-fit'), import('xterm-addon-image')]).then(
-      ([{ Terminal }, { FitAddon }, { ImageAddon }]) => {
-        const term = new Terminal({
-          cursorBlink: false,
-          cursorStyle: 'block',
-          theme: {
-            background: isDark ? '#0A0A0C' : '#FFFFFF',
-            foreground: isDark ? '#FFFFFF' : '#000000',
-            cursor: isDark ? '#CCFF00' : '#FF3300',
-            cursorAccent: isDark ? '#000000' : '#FFFFFF',
-            selectionBackground: isDark ? '#CCFF0033' : '#FF330033',
-            black: isDark ? '#0A0A0C' : '#000000',
-            red: '#FF3300',
-            green: '#CCFF00',
-            yellow: '#FFD700',
-            blue: '#0055FF',
-            magenta: '#FF00FF',
-            cyan: '#00FFFF',
-            white: isDark ? '#FFFFFF' : '#F0F0EB',
-            brightBlack: '#55555A',
-            brightRed: '#FF6633',
-            brightGreen: '#D4FF33',
-            brightYellow: '#FFEA00',
-            brightBlue: '#3377FF',
-            brightMagenta: '#FF33FF',
-            brightCyan: '#33FFFF',
-            brightWhite: '#FFFFFF',
-          },
-          fontFamily: '"JetBrainsMono Nerd Font", "JetBrainsMonoNL Nerd Font", var(--font-mono), "JetBrains Mono", monospace',
-          fontSize: 14,
-          fontWeight: '500',
-          lineHeight: 1.5,
-          letterSpacing: 0,
-          scrollback: 10000,
-        });
-
-        term.attachCustomKeyEventHandler((e: KeyboardEvent) => {
-          if (e.ctrlKey && !e.altKey && !e.metaKey) {
-            if (e.key.toLowerCase() === 't' || (e.key >= '1' && e.key <= '9')) {
-              return false;
-            }
-          }
-          return true;
-        });
-
-        const fitAddon = new FitAddon();
-        term.loadAddon(fitAddon);
-        term.loadAddon(new ImageAddon());
-        term.open(el);
-        fitAddon.fit();
-
-        const updateStatus = (s: TabStatus) =>
-          setTabs((prev) => prev.map((t) => (t.id === tabId ? { ...t, status: s } : t)));
-
-        const sendSize = (sock: WebSocket) => {
-          if (sock.readyState === WebSocket.OPEN) {
-            try { sock.send(JSON.stringify({ type: 'resize', cols: term.cols, rows: term.rows })); } catch { }
-          }
-        };
-
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const socket = new WebSocket(`${protocol}//${window.location.host}/ws`);
-
-        socket.onopen = () => {
-          updateStatus('connected');
-          requestAnimationFrame(() => {
-            try { fitAddon.fit(); } catch { }
-            sendSize(socket);
-          });
-          term.write(`\r\n\x1b[1m\x1b[38;5;${isDark ? '190' : '202'}m[SYS_READY]\x1b[0m CONNECTION ESTABLISHED \r\n`);
-          term.write(`\x1b[90m----------------------------------------\x1b[0m\r\n\r\n`);
-        };
-        socket.onmessage = (e) => term.write(e.data);
-        socket.onclose = () => {
-          updateStatus('disconnected');
-          term.write('\r\n\x1b[1m\x1b[31m[SYS_HALT]\x1b[0m SESSION TERMINATED\r\n');
-        };
-
-        term.onData((data) => { if (socket.readyState === WebSocket.OPEN) socket.send(data); });
-        term.onResize(({ cols, rows }) => {
-          if (socket.readyState === WebSocket.OPEN) {
-            try { socket.send(JSON.stringify({ type: 'resize', cols, rows })); } catch { }
-          }
-        });
-
-        const ro = new ResizeObserver(() => { try { fitAddon.fit(); } catch { } });
-        ro.observe(el);
-
-        // ─── Ensure Nerd Font is loaded BEFORE xterm caches glyph metrics ───
-        const ensureFontLoaded = async () => {
-          try {
-            // Explicitly request the exact face xterm will render with.
-            // This forces the browser to fetch the woff2 if it hasn't already.
-            await Promise.all([
-              document.fonts.load('500 14px "JetBrainsMono Nerd Font"'),
-              document.fonts.load('400 14px "JetBrainsMono Nerd Font"'),
-            ]);
-            await document.fonts.ready;
-          } catch (err) {
-            console.warn('[xterm] font load failed', err);
-          }
-
-          try {
-            fitAddon.fit();
-            // xterm >= 5.2: invalidate the WebGL/canvas glyph atlas so icons
-            // re-render at the correct width using the now-available font.
-            (term as any).clearTextureAtlas?.();
-            term.refresh(0, term.rows - 1);
-          } catch { }
-
-          sendSize(socket);
-        };
-        ensureFontLoaded();
-        // ─────────────────────────────────────────────────────────────────────
-
-        resources.current.set(tabId, {
-          socket,
-          dispose: () => { ro.disconnect(); term.dispose(); socket.close(); },
-          fit: () => { try { fitAddon.fit(); } catch { } },
-          focus: () => { try { term.focus(); } catch { } },
-          term,
-        } as TabResources & { term: any });
-      }
-    );
-  }, [currentTheme]);
-
-  const setMountRef = useCallback(
-    (tabId: string) => (el: HTMLDivElement | null) => {
-      if (el) { mountRefs.current.set(tabId, el); bootTerminal(tabId, el); }
-      else { mountRefs.current.delete(tabId); }
-    },
-    [bootTerminal]
-  );
-
-  useEffect(() => {
-    const isDark = currentTheme === 'dark';
-    const newTheme = {
-      background: isDark ? '#0A0A0C' : '#FFFFFF',
-      foreground: isDark ? '#FFFFFF' : '#000000',
-      cursor: isDark ? '#CCFF00' : '#FF3300',
-      cursorAccent: isDark ? '#000000' : '#FFFFFF',
-      selectionBackground: isDark ? '#CCFF0033' : '#FF330033',
-      black: isDark ? '#0A0A0C' : '#000000',
-      red: '#FF3300',
-      green: '#CCFF00',
-      white: isDark ? '#FFFFFF' : '#F0F0EB',
-      brightBlack: '#55555A',
-    };
-
-    tabs.forEach(tab => {
-      const res = resources.current.get(tab.id);
-      if (res && (res as any).term) {
-        (res as any).term.options.theme = { ...(res as any).term.options.theme, ...newTheme };
-      }
-    });
-  }, [currentTheme, tabs]);
-
-  useEffect(() => {
-    const res = resources.current.get(activeId);
-    if (res) requestAnimationFrame(() => { res.fit(); res.focus(); });
-  }, [activeId]);
-
-  const addTab = () => {
-    const id = newTabId();
-    setTabs((prev) => [...prev, { id, label: `TTY${prev.length + 1}`, status: 'connecting' }]);
-    setActiveId(id);
-  };
-
-  const closeTab = (e: React.MouseEvent, tabId: string) => {
-    e.stopPropagation();
-    resources.current.get(tabId)?.dispose();
-    resources.current.delete(tabId);
-    initialized.current.delete(tabId);
-    mountRefs.current.delete(tabId);
-
-    setTabs((prev) => {
-      const next = prev.filter((t) => t.id !== tabId);
-      if (tabId === activeId && next.length > 0) {
-        const idx = prev.findIndex((t) => t.id === tabId);
-        setActiveId(next[Math.min(idx, next.length - 1)].id);
-      }
-      return next;
-    });
-  };
-
-  const activeTab = tabs.find((t) => t.id === activeId);
-  const status = activeTab?.status ?? 'connecting';
-
-  const statusConfig = {
-    connected: { label: 'ONLINE', icon: '■' },
-    connecting: { label: 'LINKING', icon: '▲' },
-    disconnected: { label: 'OFFLINE', icon: '▼' },
-  }[status];
-
+export default function LandingPage() {
   return (
-    <div className="flex h-[100dvh] w-full bg-background overflow-hidden">
-      <Sidebar activeTab="terminal" />
+    <div className="flex h-[100dvh] w-full bg-background overflow-hidden relative selection:bg-accent/20 selection:text-accent">
+      <Sidebar activeTab="home" />
 
-      <div className="flex-1 flex flex-col min-w-0 bg-bg-surface">
-        <div className="flex-1 flex flex-col bg-bg-base relative overflow-hidden">
-          <div className="flex flex-col h-full">
-            <div className="flex h-12 bg-bg-surface shrink-0 items-end px-4 gap-2 overflow-x-auto no-scrollbar border-b border-border-main">
-              <div className="flex items-center h-full pr-6 text-sm font-bold tracking-widest text-text-1">
-                CHRONOSOLE // TTY
+      <main className="flex-1 bg-bg-surface text-text-1 flex flex-col relative overflow-hidden font-mono">
+        {/* Subtle CRT curve/vignette effect */}
+        <div className="absolute inset-0 pointer-events-none z-50 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.1)_50%)] bg-[length:100%_4px] opacity-20" />
+        <div className="absolute inset-0 pointer-events-none z-40 bg-[radial-gradient(circle_at_center,transparent_0%,var(--color-bg-surface)_100%)] opacity-80" />
+
+        {/* Animated grid overlay */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,var(--color-border-main)_1px,transparent_1px),linear-gradient(to_bottom,var(--color-border-main)_1px,transparent_1px)] bg-[size:32px_32px] opacity-10 animate-grid-flow" />
+
+        {/* Top ambient glow */}
+        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-accent to-transparent opacity-70 shadow-[0_0_10px_var(--color-accent)]" />
+
+        <div className="flex-1 flex flex-col items-center justify-center relative z-10 px-8">
+          <div className="w-full max-w-3xl space-y-12 animate-fade-in-up">
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 text-[11px] tracking-widest text-accent font-semibold drop-shadow-[0_0_8px_var(--color-accent-sub)]">
+                <span className="w-2 h-2 bg-accent animate-pulse shadow-[0_0_5px_var(--color-accent)]" />
+                SYS.STATUS: ONLINE // AWAITING HANDSHAKE
               </div>
 
-              <div className="flex flex-1 items-end h-full gap-1 pt-2 border-l border-border-main pl-2">
-                {tabs.map((tab, i) => {
-                  const isActive = tab.id === activeId;
-                  return (
-                    <div
-                      key={tab.id}
-                      onClick={() => setActiveId(tab.id)}
-                      className={`group flex items-center gap-3 px-4 h-full min-w-[120px] cursor-pointer transition-colors relative ${isActive
-                        ? 'bg-bg-base text-text-1 z-10 border-t-2 border-accent'
-                        : 'bg-transparent hover:bg-bg-raised text-text-3 border-t-2 border-transparent'
-                        }`}
-                    >
-                      {isActive && (
-                        <div className="absolute inset-x-0 top-0 h-[1px] shadow-[0_0_12px_1px_var(--accent)] opacity-40 pointer-events-none" />
-                      )}
-                      <span className={`text-[8px] ${tab.status === 'connected' ? 'text-accent' : 'text-text-3'}`}>■</span>
-                      <span className="text-sm font-mono font-semibold">{tab.label}</span>
-                      {i < 9 && (
-                        <span className={`text-[10px] border px-1 rounded transition-opacity ${isActive ? 'border-text-3 opacity-100' : 'border-border-main opacity-0 group-hover:opacity-100'
-                          }`}>
-                          ^{i + 1}
-                        </span>
-                      )}
-                      {tabs.length > 1 && (
-                        <span className="ml-auto text-xs opacity-0 group-hover:opacity-100 hover:text-accent transition-all" onClick={(e) => closeTab(e, tab.id)}>✕</span>
-                      )}
-                    </div>
-                  );
-                })}
-                <button onClick={addTab} className="h-full px-4 text-text-3 hover:text-text-1 transition-colors mb-1">
-                  +
-                </button>
-              </div>
+              <h1 className="text-6xl md:text-8xl font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-text-1 via-text-1 to-text-3 font-chakra relative inline-block">
+                CHRONOSOLE
+              </h1>
 
-              <div className="hidden lg:flex items-center h-full px-4 gap-6 font-mono text-[11px] text-text-2 border-l border-border-main">
-                <div className="flex items-center gap-2">
-                  <span className="text-accent text-[8px]">{statusConfig.icon}</span>
-                  <span className="text-accent tracking-wider">{statusConfig.label}</span>
-                </div>
-                <div className="tracking-wider">{date} // {time}</div>
-                <ThemeToggle />
+              <p className="text-text-2 text-lg md:text-xl max-w-xl leading-relaxed border-l-2 border-border-main pl-4">
+                Advanced hardware terminal interface. Gain direct command-line access to the core systems and operations framework.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-text-3 border-y border-border-main py-6 bg-gradient-to-r from-transparent via-bg-base/30 to-transparent">
+              <div className="flex flex-col gap-1 hover:text-text-1 transition-colors">
+                <span className="text-text-2">PROTOCOL</span>
+                <span className="font-semibold">WSS // SECURE</span>
+              </div>
+              <div className="flex flex-col gap-1 hover:text-text-1 transition-colors">
+                <span className="text-text-2">LATENCY</span>
+                <span className="font-semibold text-accent drop-shadow-[0_0_2px_var(--color-accent)]">12ms (LOCAL)</span>
+              </div>
+              <div className="flex flex-col gap-1 hover:text-text-1 transition-colors">
+                <span className="text-text-2">ENCRYPTION</span>
+                <span className="font-semibold">AES-256-GCM</span>
               </div>
             </div>
 
-            <div className="flex-1 relative bg-bg-base overflow-hidden">
-              {tabs.map((tab) => (
-                <div
-                  key={tab.id}
-                  className={`absolute inset-0 transition-opacity duration-200 ${tab.id === activeId ? 'opacity-100 pointer-events-auto z-10' : 'opacity-0 pointer-events-none z-0'
-                    }`}
-                >
-                  <div ref={setMountRef(tab.id)} className="w-full h-full" />
-                </div>
-              ))}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 pt-4">
+              <Link
+                href="/cli"
+                className="group relative inline-flex items-center justify-center px-8 py-4 font-bold text-bg-surface bg-accent transition-all duration-300 overflow-hidden"
+              >
+                {/* Hover slide effect */}
+                <div className="absolute inset-0 bg-bg-surface translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out" />
+
+                {/* Outer expanding border */}
+                <span className="absolute inset-0 border border-accent scale-[1.05] opacity-0 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300" />
+
+                {/* Corner details */}
+                <div className="absolute top-0 left-0 w-1.5 h-1.5 bg-bg-surface z-10" />
+                <div className="absolute bottom-0 right-0 w-1.5 h-1.5 bg-bg-surface z-10" />
+
+                <span className="tracking-widest flex items-center gap-3 relative z-10 group-hover:text-accent transition-colors duration-300">
+                  [ INITIALIZE_SESSION ]
+                  <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="square" strokeLinejoin="miter" strokeWidth="2" d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </span>
+              </Link>
+
+              <div className="text-xs text-text-3 hidden sm:flex items-center gap-2">
+                <span>Press</span>
+                <kbd className="border border-border-main px-2 py-1 rounded text-text-2 bg-bg-base shadow-[inset_0_-1px_0_var(--color-border-main)] font-sans">
+                  ENTER
+                </kbd>
+                <span>to launch</span>
+              </div>
             </div>
 
-            <div className="flex h-8 border-t border-border-main bg-bg-surface shrink-0 items-center px-4 justify-between font-mono text-[11px] text-text-3 tracking-widest overflow-x-auto no-scrollbar">
-              <div className="flex items-center gap-6 whitespace-nowrap">
-                <div>ENV: <span className="text-accent font-bold">PRODUCTION</span></div>
-                <div>ENC: <span className="text-text-1 font-bold">UTF-8</span></div>
-                <div className="flex items-center gap-4 pl-6 border-l border-border-main">
-                  <div className="flex items-center gap-2"><span className="border border-border-main px-1.5 rounded text-text-1 bg-bg-base">^C</span> INT</div>
-                  <div className="flex items-center gap-2"><span className="border border-border-main px-1.5 rounded text-text-1 bg-bg-base">^D</span> EOF</div>
-                  <div className="flex items-center gap-2"><span className="border border-border-main px-1.5 rounded text-text-1 bg-bg-base">^T</span> NEW</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 whitespace-nowrap pl-4">
-                <span className="text-accent text-[10px]">∿</span>
-                WS // ACTIVE: {tabs.findIndex((t) => t.id === activeId) + 1}/{tabs.length}
-              </div>
-            </div>
           </div>
         </div>
-      </div>
+
+        {/* Bottom status bar */}
+        <div className="relative z-10 p-6 flex justify-between items-end text-[10px] text-text-3 tracking-widest border-t border-border-main bg-bg-surface/80 backdrop-blur-md shrink-0">
+          <div className="flex flex-col gap-1.5">
+            <span>{'>'} SYSTEM BOOT SEQUENCE COMPLETED...</span>
+            <span>{'>'} ESTABLISHING SECURE TUNNEL...</span>
+            <span className="text-accent flex items-center gap-1 drop-shadow-[0_0_4px_var(--color-accent-sub)]">
+              {'>'} READY FOR INPUT <span className="w-1.5 h-3 bg-accent animate-blink block" />
+            </span>
+          </div>
+          <div className="text-right hidden sm:block opacity-50">
+            SYS.TERM // 2026.1
+          </div>
+        </div>
+      </main>
     </div>
   );
 }

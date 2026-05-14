@@ -1,14 +1,16 @@
 import { useRouter } from 'next/navigation';
-import { Zap, TerminalSquare, Folder, Settings, LineChart } from 'lucide-react';
+import { Zap, Home, TerminalSquare, Folder, Settings, LineChart, Bot } from 'lucide-react';
 
-export type SidebarTab = 'terminal' | 'files' | 'system' | 'settings';
+export type SidebarTab = 'home' | 'terminal' | 'chat' | 'files' | 'system' | 'settings';
 
 interface SidebarProps {
   activeTab: SidebarTab;
 }
 
 const routeMap: Record<SidebarTab, string> = {
-  terminal: '/',
+  home: '/',
+  terminal: '/cli',
+  chat: '/agent',
   files: '/file-explorer',
   system: '/system',
   settings: '/settings',
@@ -39,12 +41,13 @@ export function Sidebar({ activeTab }: SidebarProps) {
       </div>
 
       <div className="flex flex-col gap-4 w-full items-center flex-1">
+        <NavIcon tab="home" Icon={Home} />
         <NavIcon tab="terminal" Icon={TerminalSquare} />
+        <NavIcon tab="chat" Icon={Bot} />
         <NavIcon tab="files" Icon={Folder} />
         <NavIcon tab="system" Icon={LineChart} />
         <NavIcon tab="settings" Icon={Settings} />
       </div>
-
     </aside>
   );
 }

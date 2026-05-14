@@ -17,6 +17,26 @@
   --color-text-3: var(--text-3);
   --color-accent: var(--accent);
   --color-accent-sub: var(--accent-sub);
+
+  /* Custom Animations */
+  --animate-grid-flow: grid-flow 20s linear infinite;
+  --animate-blink: blink 1s step-end infinite;
+  --animate-fade-in-up: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes grid-flow {
+  0% { transform: translateY(0) translateX(0); }
+  100% { transform: translateY(32px) translateX(32px); }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes fadeInUp {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 @font-face {
@@ -34,6 +54,7 @@
   font-style: normal;
   font-display: block;
 }
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -48,7 +69,7 @@
   --text-2:     #4b5563;
   --text-3:     #9ca3af;
   --accent:     #84cc16;
-  --accent-sub: #84cc1618;
+  --accent-sub: #84cc1640; 
 }
 
 .dark {
@@ -65,7 +86,7 @@
   --text-2:     #9ba1b0;
   --text-3:     #5a6070;
   --accent:     #CCFF00;
-  --accent-sub: #CCFF0018;
+  --accent-sub: #CCFF0033;
 }
 
 body {
