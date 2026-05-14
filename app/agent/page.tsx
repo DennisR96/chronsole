@@ -47,6 +47,14 @@ interface UsageState {
   llmCalls: number;
 }
 
+interface McpServerConfig {
+  name: string;
+  command: string;
+  args?: string[];
+  env?: Record<string, string>;
+  enabled?: boolean;
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const ts = () =>
@@ -59,7 +67,60 @@ const ts = () =>
 
 const uid = () => `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
+function parseMcpServers(raw: string): McpServerConfig[] {
+  if (!raw.trim()) return [];
+
+  const parsed = JSON.parse(raw);
+
+  if (!Array.isArray(parsed)) {
+    throw new Error('MCP config must be a JSON array.');
+  }
+
+  for (const [idx, server] of parsed.entries()) {
+    if (!server || typeof server !== 'object') {
+      throw new Error(`MCP server at index ${idx} must be an object.`);
+    }
+
+    if (typeof server.name !== 'string' || !server.name.trim()) {
+      throw new Error(`MCP server at index ${idx} is missing a valid "name".`);
+    }
+
+    if (typeof server.command !== 'string' || !server.command.trim()) {
+      throw new Error(`MCP server "${server.name}" is missing a valid "command".`);
+    }
+
+    if (server.args !== undefined && !Array.isArray(server.args)) {
+      throw new Error(`MCP server "${server.name}" has invalid "args"; expected array.`);
+    }
+
+    if (
+      server.env !== undefined &&
+      (!server.env || typeof server.env !== 'object' || Array.isArray(server.env))
+    ) {
+      throw new Error(`MCP server "${server.name}" has invalid "env"; expected object.`);
+    }
+  }
+
+  return parsed;
+}
+
+function formatMcpToolName(name: string): string {
+  if (!name.startsWith('mcp__')) return name;
+
+  const parts = name.split('__');
+
+  if (parts.length >= 3) {
+    return `MCP:${parts[1]} / ${parts.slice(2).join('__')}`;
+  }
+
+  return name;
+}
+
 function formatToolSummary(name: string, args: Record<string, unknown>): string {
+  if (name.startsWith('mcp__')) {
+    return `${formatMcpToolName(name)} ${JSON.stringify(args ?? {})}`;
+  }
+
   switch (name) {
     case 'shell_execute':
       return `$ ${args.command}${args.working_directory ? `  [cwd: ${args.working_directory}]` : ''}`;
@@ -77,6 +138,8 @@ function formatToolSummary(name: string, args: Record<string, unknown>): string 
 }
 
 function toolIcon(name: string): string {
+  if (name.startsWith('mcp__')) return '🔌';
+
   const map: Record<string, string> = {
     shell_execute: '⌘',
     file_read: '📄',
@@ -84,10 +147,13 @@ function toolIcon(name: string): string {
     directory_list: '📁',
     file_delete: '🗑',
   };
+
   return map[name] ?? '🔧';
 }
 
 function riskLevel(name: string, args: Record<string, unknown>): 'low' | 'medium' | 'high' {
+  if (name.startsWith('mcp__')) return 'medium';
+
   if (name === 'file_delete') return 'high';
 
   if (name === 'shell_execute') {
@@ -129,7 +195,7 @@ function ToolCallBubble({ msg, onToggle }: { msg: Message; onToggle: (id: string
         <div className="flex items-center gap-2 px-3 py-2 border-b border-yellow-400/20">
           <span className="text-yellow-400 text-xs">{toolIcon(msg.toolName ?? '')}</span>
           <span className="text-yellow-400 font-bold text-[11px] tracking-widest uppercase">
-            {msg.toolName}
+            {formatMcpToolName(msg.toolName ?? '')}
           </span>
           <span className="ml-auto text-yellow-400/40 text-[10px]">EXECUTING</span>
         </div>
@@ -151,7 +217,7 @@ function ToolResultBubble({ msg, onToggle }: { msg: Message; onToggle: (id: stri
     <div className="flex flex-col items-start">
       <div className="flex items-center gap-2 mb-1 opacity-60 text-[10px] tracking-wider font-mono">
         <span className="text-emerald-400">RESULT</span>
-        <span className="text-text-3">{msg.toolName}</span>
+        <span className="text-text-3">{formatMcpToolName(msg.toolName ?? '')}</span>
         <span>{msg.timestamp}</span>
       </div>
 
@@ -298,7 +364,7 @@ function ToolConfirmBubble({
                   <span className="text-sm">{toolIcon(tc.name)}</span>
 
                   <span className="text-text-1 font-bold text-[11px] tracking-widest uppercase">
-                    {tc.name}
+                    {formatMcpToolName(tc.name)}
                   </span>
 
                   <span
@@ -322,7 +388,7 @@ function ToolConfirmBubble({
                 </div>
 
                 {Object.keys(tc.args).length > 0 && tc.name !== 'shell_execute' && (
-                  <div className="mb-2 text-[10px] text-text-3 break-all">
+                  <div className="mb-2 text-[10px] text-text-3 break-all whitespace-pre-wrap">
                     {JSON.stringify(tc.args, null, 2)}
                   </div>
                 )}
@@ -361,7 +427,8 @@ function ToolConfirmBubble({
         <div className="px-3 py-2 border-t border-orange-400/20 flex items-center gap-3">
           <span className="text-[10px] text-text-3 tracking-wider">
             {allDecided
-              ? `${decisions.filter((d) => d === true).length} approved · ${decisions.filter((d) => d === false).length} denied`
+              ? `${decisions.filter((d) => d === true).length} approved · ${decisions.filter((d) => d === false).length
+              } denied`
               : `${decisions.filter((d) => d !== null).length} / ${calls.length} decided`}
           </span>
 
@@ -552,12 +619,12 @@ function UsageBar({ usage, active }: { usage: UsageState; active: boolean }) {
         <span className="text-text-3">COST</span>
         <span
           className={`font-bold text-[11px] ${usage.cost > 0.1
-            ? 'text-red-400'
-            : usage.cost > 0.01
-              ? 'text-yellow-400'
-              : hasData
-                ? 'text-emerald-400'
-                : 'text-text-3'
+              ? 'text-red-400'
+              : usage.cost > 0.01
+                ? 'text-yellow-400'
+                : hasData
+                  ? 'text-emerald-400'
+                  : 'text-text-3'
             }`}
         >
           {formatCost(usage.cost)}
@@ -589,7 +656,7 @@ function makeBootMessages(): Message[] {
       id: uid(),
       role: 'agent',
       content:
-        'Agent framework active. I have access to your local machine — I can run shell commands, read/write files, and inspect directories. **You will be asked to approve each tool call before it runs.** What would you like me to do?',
+        'Agent framework active. I have access to your local machine, configured tools, and any enabled MCP servers. I can run shell commands, read/write files, inspect directories, and call MCP tools. **You will be asked to approve each tool call before it runs.** What would you like me to do?',
       timestamp: ts(),
     },
   ];
@@ -623,6 +690,7 @@ export default function AgentChatPage() {
   const [baseUrl, setBaseUrl] = useState('https://openrouter.ai/api/v1');
   const [model, setModel] = useState('anthropic/claude-3.5-sonnet');
   const [workDir, setWorkDir] = useState('');
+  const [mcpConfig, setMcpConfig] = useState('');
   const [isBrowsing, setIsBrowsing] = useState(false);
 
   const apiMessagesRef = useRef<any[]>([]);
@@ -667,12 +735,14 @@ export default function AgentChatPage() {
     const m = localStorage.getItem('agent_model');
     const w = localStorage.getItem('agent_work_dir');
     const h = localStorage.getItem('agent_history_open');
+    const mcp = localStorage.getItem('agent_mcp_servers');
 
     if (k) setApiKey(k);
     if (b) setBaseUrl(b);
     if (m) setModel(m);
     if (w) setWorkDir(w);
     if (h !== null) setIsHistoryOpen(h === 'true');
+    if (mcp) setMcpConfig(mcp);
 
     const stored = useChatStore.getState();
 
@@ -931,6 +1001,23 @@ export default function AgentChatPage() {
       const abort = new AbortController();
       abortRef.current = abort;
 
+      let parsedMcpServers: McpServerConfig[] = [];
+
+      try {
+        parsedMcpServers = parseMcpServers(mcpConfig);
+      } catch (err: any) {
+        addMessage({
+          role: 'system',
+          content: `MCP CONFIG ERROR: ${err.message}`,
+          timestamp: ts(),
+          isError: true,
+        });
+
+        setAgentPhase('idle');
+        abortRef.current = null;
+        return;
+      }
+
       try {
         const res = await fetch('/api/agent', {
           method: 'POST',
@@ -943,6 +1030,7 @@ export default function AgentChatPage() {
             pendingToolResults: pendingToolResults ?? null,
             sessionUsage,
             workDir: workDir.trim() || null,
+            mcpServers: parsedMcpServers,
           }),
           signal: abort.signal,
         });
@@ -998,7 +1086,7 @@ export default function AgentChatPage() {
         abortRef.current = null;
       }
     },
-    [apiKey, baseUrl, model, workDir, sessionUsage, handleSSEEvent, addMessage]
+    [apiKey, baseUrl, model, workDir, mcpConfig, sessionUsage, handleSSEEvent, addMessage]
   );
 
   // ── Confirm resolve ───────────────────────────────────────────────────────
@@ -1141,10 +1229,24 @@ export default function AgentChatPage() {
 
   // ── Save settings ─────────────────────────────────────────────────────────
   const handleSaveSettings = () => {
+    try {
+      parseMcpServers(mcpConfig);
+    } catch (err: any) {
+      addMessage({
+        role: 'system',
+        content: `MCP CONFIG ERROR: ${err.message}`,
+        timestamp: ts(),
+        isError: true,
+      });
+
+      return;
+    }
+
     localStorage.setItem('agent_api_key', apiKey);
     localStorage.setItem('agent_base_url', baseUrl);
     localStorage.setItem('agent_model', model);
     localStorage.setItem('agent_work_dir', workDir);
+    localStorage.setItem('agent_mcp_servers', mcpConfig);
 
     setIsSettingsOpen(false);
 
@@ -1161,6 +1263,14 @@ export default function AgentChatPage() {
     ? workDir.trim().split(/[\\/]/).filter(Boolean).pop()?.toUpperCase() ?? workDir.trim()
     : null;
 
+  const mcpServerCount = (() => {
+    try {
+      return parseMcpServers(mcpConfig).filter((server) => server.enabled !== false).length;
+    } catch {
+      return 0;
+    }
+  })();
+
   // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
@@ -1170,7 +1280,7 @@ export default function AgentChatPage() {
       {/* Settings Modal */}
       {isSettingsOpen && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 font-mono">
-          <div className="bg-bg-surface border border-accent/50 w-full max-w-md p-6 shadow-[0_0_20px_rgba(var(--color-accent),0.15)]">
+          <div className="bg-bg-surface border border-accent/50 w-full max-w-2xl max-h-[90dvh] overflow-y-auto p-6 shadow-[0_0_20px_rgba(var(--color-accent),0.15)]">
             <div className="flex items-center justify-between border-b border-border-main pb-4 mb-6">
               <h2 className="text-accent font-bold tracking-widest uppercase">
                 System Configuration
@@ -1287,11 +1397,40 @@ export default function AgentChatPage() {
                   against it. Leave empty to use the server process cwd.
                 </p>
               </div>
+
+              <div className="space-y-2">
+                <label className="text-[11px] text-text-2 tracking-widest uppercase">
+                  MCP Servers
+                </label>
+
+                <div className="relative bg-bg-base border border-border-main focus-within:border-accent transition-colors">
+                  <textarea
+                    value={mcpConfig}
+                    onChange={(e) => setMcpConfig(e.target.value)}
+                    placeholder={`[
+  {
+    "name": "filesystem",
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"],
+    "enabled": true
+  }
+]`}
+                    rows={10}
+                    className="w-full bg-transparent border-none outline-none p-3 text-xs text-text-1 placeholder:text-text-3 font-mono resize-y"
+                  />
+                </div>
+
+                <p className="text-[10px] text-text-3 tracking-wider leading-relaxed">
+                  JSON array of stdio MCP servers. Each server can define name, command, args,
+                  env, and enabled. MCP tools are exposed as mcp__server__tool and still require
+                  approval.
+                </p>
+              </div>
             </div>
 
             <div className="mt-6 p-3 border border-yellow-400/20 bg-yellow-400/5 text-yellow-400/70 text-[11px] tracking-wider">
-              ⚠ This agent can execute shell commands on your machine. Only connect to trusted
-              models and APIs.
+              ⚠ This agent can execute shell commands and call configured MCP tools. Only connect
+              to trusted models, APIs, and MCP servers.
             </div>
 
             <div className="mt-4 flex gap-3">
@@ -1328,8 +1467,8 @@ export default function AgentChatPage() {
                 <div className="flex items-center gap-2">
                   <span
                     className={`text-[8px] ${agentPhase !== 'idle'
-                      ? 'text-yellow-400 animate-pulse'
-                      : 'text-emerald-400'
+                        ? 'text-yellow-400 animate-pulse'
+                        : 'text-emerald-400'
                       }`}
                   >
                     ■
@@ -1337,10 +1476,10 @@ export default function AgentChatPage() {
 
                   <span
                     className={`tracking-wider ${agentPhase === 'awaiting_confirm'
-                      ? 'text-orange-400'
-                      : agentPhase !== 'idle'
-                        ? 'text-yellow-400'
-                        : 'text-emerald-400'
+                        ? 'text-orange-400'
+                        : agentPhase !== 'idle'
+                          ? 'text-yellow-400'
+                          : 'text-emerald-400'
                       }`}
                   >
                     {agentPhase === 'awaiting_confirm'
@@ -1541,6 +1680,19 @@ export default function AgentChatPage() {
                   </div>
                 )}
 
+                {mcpServerCount > 0 && (
+                  <div className="flex items-center gap-1.5 pl-6 border-l border-border-main">
+                    <span className="text-text-3">🔌</span>
+                    <span
+                      className="text-violet-400 font-bold cursor-pointer hover:text-violet-300 transition-colors"
+                      title="Configured MCP servers"
+                      onClick={() => setIsSettingsOpen(true)}
+                    >
+                      MCP:{mcpServerCount}
+                    </span>
+                  </div>
+                )}
+
                 <div className="flex items-center gap-4 pl-6 border-l border-border-main">
                   <div className="flex items-center gap-2">
                     <span className="border border-border-main px-1.5 rounded text-text-1 bg-bg-base">
@@ -1549,17 +1701,17 @@ export default function AgentChatPage() {
                     SEND
                   </div>
 
-                  <div className="text-yellow-400/60">⌘ SHELL • 📁 FS • ✏️ WRITE</div>
+                  <div className="text-yellow-400/60">⌘ SHELL • 📁 FS • ✏️ WRITE • 🔌 MCP</div>
                 </div>
               </div>
 
               <div className="flex items-center gap-2 whitespace-nowrap pl-4">
                 <span
                   className={`text-[10px] ${agentPhase === 'awaiting_confirm'
-                    ? 'text-orange-400 animate-pulse'
-                    : agentPhase !== 'idle'
-                      ? 'text-yellow-400 animate-pulse'
-                      : 'text-emerald-400'
+                      ? 'text-orange-400 animate-pulse'
+                      : agentPhase !== 'idle'
+                        ? 'text-yellow-400 animate-pulse'
+                        : 'text-emerald-400'
                     }`}
                 >
                   ∿

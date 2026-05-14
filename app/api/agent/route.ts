@@ -3,6 +3,14 @@
 import { NextRequest } from 'next/server';
 import { TOOLS, executeTool } from './tools';
 import type { PendingToolCall } from './tools/types';
+import {
+  closeMcpSessions,
+  createMcpSessions,
+  executeMcpTool,
+  isMcpToolName,
+  listMcpTools,
+  type McpServerConfig,
+} from './mcp';
 
 export async function POST(req: NextRequest) {
   const {
@@ -13,6 +21,7 @@ export async function POST(req: NextRequest) {
     pendingToolResults,
     sessionUsage: incomingUsage,
     workDir,
+    mcpServers,
   } = await req.json();
 
   if (!apiKey) {
@@ -28,21 +37,26 @@ export async function POST(req: NextRequest) {
     ? `\nYour current working directory is: ${workDir}\nAll relative paths are resolved against this directory.`
     : '\nNo working directory is configured; the server process cwd will be used.';
 
-  const SYSTEM_PROMPT = `You are CHRONOSOLE, an AI agent with direct access to the user's local machine. You can execute shell commands, read/write files, and inspect the filesystem.
+  const SYSTEM_PROMPT = `You are CHRONOSOLE, an AI agent with direct access to the user's local machine. You can execute shell commands, read/write files, inspect the filesystem, and call configured MCP server tools.
 ${workDirLine}
 
-Available tools:
+Local tools:
 - shell_execute: Run any shell command (bash/sh on Unix, cmd on Windows)
 - file_read: Read file contents
 - file_write: Write or append to files
 - directory_list: List directory contents
 - file_delete: Delete a file
 
+MCP tools:
+- MCP tools are dynamically loaded from the configured MCP servers.
+- MCP tool names are prefixed like mcp__serverName__toolName.
+- Treat MCP tools as external capabilities. Explain what you are calling and why.
+
 Guidelines:
 - Be precise and concise in your reasoning
-- Always show what commands you're running and why
+- Always show what commands or tools you're using and why
 - Prefer non-destructive operations unless explicitly asked
-- If a command might be dangerous, state that clearly before running it
+- If a command or tool might be dangerous, state that clearly before running it
 - Use multiple tool calls to gather context before making changes
 - Report results accurately including errors
 
@@ -71,8 +85,17 @@ Think step by step, use tools to accomplish the task, then give a clear summary 
       };
 
       let apiMessages: any[] = messages ?? [];
+      let mcpSessions: Awaited<ReturnType<typeof createMcpSessions>> = [];
 
       try {
+        mcpSessions = await createMcpSessions(mcpServers as McpServerConfig[]);
+        const { tools: mcpRuntimeTools, lookup: mcpLookup } = await listMcpTools(mcpSessions);
+
+        const allTools = [
+          ...TOOLS,
+          ...mcpRuntimeTools.map((tool) => tool.openAITool),
+        ];
+
         if (pendingToolResults && pendingToolResults.length > 0) {
           const toolResultMessages: any[] = [];
 
@@ -83,9 +106,11 @@ Think step by step, use tools to accomplish the task, then give a clear summary 
               args: tc.args,
             });
 
-            const result = await executeTool(tc.name, tc.args, {
-              workDir: workDir ?? null,
-            });
+            const result = isMcpToolName(tc.name)
+              ? await executeMcpTool(mcpSessions, tc.name, tc.args ?? {}, mcpLookup)
+              : await executeTool(tc.name, tc.args, {
+                workDir: workDir ?? null,
+              });
 
             send('tool_result', {
               id: tc.id,
@@ -114,7 +139,7 @@ Think step by step, use tools to accomplish the task, then give a clear summary 
           body: JSON.stringify({
             model: resolvedModel,
             messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...apiMessages],
-            tools: TOOLS,
+            tools: allTools,
             tool_choice: 'auto',
             max_tokens: 4096,
           }),
@@ -163,23 +188,21 @@ Think step by step, use tools to accomplish the task, then give a clear summary 
           (choice.finish_reason === 'tool_calls' || assistantMessage.tool_calls?.length) &&
           assistantMessage.tool_calls
         ) {
-          const toolCalls: PendingToolCall[] = assistantMessage.tool_calls.map(
-            (tc: any) => {
-              let args: any = {};
+          const toolCalls: PendingToolCall[] = assistantMessage.tool_calls.map((tc: any) => {
+            let args: any = {};
 
-              try {
-                args = JSON.parse(tc.function.arguments);
-              } catch {
-                args = {};
-              }
-
-              return {
-                id: tc.id,
-                name: tc.function.name,
-                args,
-              };
+            try {
+              args = JSON.parse(tc.function.arguments);
+            } catch {
+              args = {};
             }
-          );
+
+            return {
+              id: tc.id,
+              name: tc.function.name,
+              args,
+            };
+          });
 
           send('tools_pending', {
             assistantMessage,
@@ -204,6 +227,8 @@ Think step by step, use tools to accomplish the task, then give a clear summary 
         });
 
         controller.close();
+      } finally {
+        await closeMcpSessions(mcpSessions);
       }
     },
   });

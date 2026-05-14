@@ -1,0 +1,488 @@
+- generic [ref=e1]:
+  - link [ref=e2] [cursor=pointer]: Zu den Hauptinhalten springen
+  - link [ref=e3] [cursor=pointer]:
+    - /url: https://support.google.com/websearch/answer/181196?hl=de
+    - text: Hilfe zur Barrierefreiheit
+  - link [ref=e4] [cursor=pointer]: Feedback zur Barrierefreiheit
+  - dialog "Bevor Sie zur Google Suche weitergehen" [active]:
+    - generic [ref=e11]:
+      - generic [ref=e13]:
+        - img "Google" [ref=e14]
+        - generic [ref=e15]:
+          - 'button "Sprache: ‪Deutsch‬" [ref=e17] [cursor=pointer]':
+            - generic [ref=e18]:
+              - img
+              - generic [ref=e19]: de
+          - link "Anmelden" [ref=e20] [cursor=pointer]
+      - generic [ref=e21]:
+        - heading "Bevor Sie zu Google weitergehen" [level=1] [ref=e22]
+        - generic [ref=e23]:
+          - generic [ref=e24]:
+            - text: Wir verwenden
+            - link "Cookies" [ref=e25] [cursor=pointer]:
+              - /url: https://policies.google.com/technologies/cookies?utm_source=ucbs&hl=de
+            - text: und Daten, um
+            - list [ref=e26]:
+              - listitem [ref=e27]: Google-Dienste zu erbringen und zu betreiben
+              - listitem [ref=e28]: Ausfälle zu prüfen und Maßnahmen gegen Spam, Betrug und Missbrauch zu ergreifen
+              - listitem [ref=e29]: Daten zu Zielgruppeninteraktionen und Websitestatistiken zu erheben. Mit den gewonnenen Informationen möchten wir verstehen, wie unsere Dienste verwendet werden, und die Qualität dieser Dienste verbessern.
+          - generic [ref=e30]:
+            - text: Wenn Sie „Alle akzeptieren“ auswählen, verwenden wir Cookies und Daten auch, um
+            - list [ref=e31]:
+              - listitem [ref=e32]: neue Dienste zu entwickeln und zu verbessern
+              - listitem [ref=e33]: Werbung auszuliefern und ihre Effektivität zu messen
+              - listitem [ref=e34]: je nach Ihren Einstellungen personalisierte Inhalte anzuzeigen
+              - listitem [ref=e35]: personalisierte Werbung anzuzeigen, abhängig von Ihren Einstellungen
+            - generic [ref=e36]: Wenn Sie „Alle ablehnen“ auswählen, verwenden wir Cookies nicht für diese zusätzlichen Zwecke.
+          - generic [ref=e37]: Nicht personalisierte Inhalte werden u. a. von Inhalten, die Sie sich gerade ansehen, Aktivitäten in Ihrer aktiven Suchsitzung und Ihrem Standort beeinflusst. Nicht personalisierte Werbung wird von den Inhalten, die Sie sich gerade ansehen, und Ihrem allgemeinen Standort beeinflusst. Personalisierte Inhalte und Werbung können auch relevantere Ergebnisse, Empfehlungen und individuelle Werbung enthalten, die auf früheren Aktivitäten in diesem Browser, etwa Suchanfragen bei Google, beruhen. Sofern relevant, verwenden wir Cookies und Daten außerdem, um Inhalte und Werbung altersgerecht zu gestalten.
+          - generic [ref=e38]: Wählen Sie „Weitere Optionen“ aus, um sich zusätzliche Informationen anzusehen, einschließlich Details zum Verwalten Ihrer Datenschutzeinstellungen. Sie können auch jederzeit g.co/privacytools besuchen.
+      - generic [ref=e39]:
+        - generic [ref=e40]:
+          - button "Alle ablehnen" [ref=e41] [cursor=pointer]
+          - button "Alle akzeptieren" [ref=e42] [cursor=pointer]
+        - link "Weitere Optionen für Personalisierungseinstellungen und Cookies" [ref=e44] [cursor=pointer]:
+          - generic "Weitere Optionen für Personalisierungseinstellungen und Cookies" [ref=e45]: Weitere Optionen
+      - generic [ref=e46]:
+        - link "Datenschutz" [ref=e47] [cursor=pointer]:
+          - /url: https://policies.google.com/privacy?hl=de&fg=1&utm_source=ucbs
+        - generic [ref=e48]: ·
+        - link "Nutzungsbedingungen" [ref=e49] [cursor=pointer]:
+          - /url: https://policies.google.com/terms?hl=de&fg=1&utm_source=ucbs
+  - generic [ref=e54]:
+    - search [ref=e55]:
+      - generic [ref=e57]:
+        - generic:
+          - generic:
+            - img
+        - link [ref=e59] [cursor=pointer]:
+          - /url: https://www.google.com/webhp?hl=de&ictx=2&sa=X&ved=0ahUKEwjktLbi1biUAxX8avEDHTBvNVwQPQhs
+          - img [ref=e60]
+        - generic [ref=e61]:
+          - generic [ref=e62]:
+            - combobox [ref=e65]: St Pauli last game result St Pauli last game result
+            - generic [ref=e66]:
+              - button [ref=e68] [cursor=pointer]:
+                - img [ref=e70]
+              - generic [ref=e73]:
+                - button [ref=e74] [cursor=pointer]:
+                  - img [ref=e75]
+                - button [ref=e77] [cursor=pointer]:
+                  - img [ref=e78]
+          - button [ref=e80] [cursor=pointer]:
+            - img [ref=e83]
+    - generic [ref=e85]:
+      - button [ref=e87] [cursor=pointer]
+      - generic [ref=e88]:
+        - button [ref=e90] [cursor=pointer]:
+          - img [ref=e91]
+        - link [ref=e95] [cursor=pointer]:
+          - /url: https://accounts.google.com/ServiceLogin?hl=de&passive=true&continue=https://www.google.com/search%3Fq%3DSt%2BPauli%2Blast%2Bgame%2Bresult%26sei%3DR7EFateoBa_lxc8P-9TfgAM&ec=futura_srp_og_si_72236_p
+          - text: Anmelden
+  - generic [ref=e97]:
+    - navigation [ref=e103]:
+      - list [ref=e106]:
+        - listitem [ref=e107]:
+          - link [ref=e110] [cursor=pointer]:
+            - /url: /search?q=St+Pauli+last+game+result&sca_esv=8a7c3553ca8d2c66&udm=50&fbs=ADc_l-YGrpJMQtvjQ6h14rj-dfIrn37ZoAvKM_jki0XSUf6j8VdsdenR_WIfJv2bGlxP9HiFzMIReFfA1GO3jK7impxHwVfdZsyj4bNtYymS9OPKMs2JBG1eDE4bW8yixq4vlXy9vsnCrS0gvKUKEd83vYO4iR0mGLRTcHPwqxcp4S3PV85dcTkRbMPVLbh5sVdie9Swtixp&aep=1&ntc=1&sa=X&ved=2ahUKEwjktLbi1biUAxX8avEDHTBvNVwQ2J8OegQIDxAD
+            - generic [ref=e113]: KI‑Modus
+        - listitem [ref=e114]:
+          - link [disabled] [ref=e115]:
+            - generic [ref=e117]: Alle
+        - listitem [ref=e118]:
+          - link [ref=e119] [cursor=pointer]:
+            - /url: /search?sca_esv=8a7c3553ca8d2c66&q=St+Pauli+last+game+result&tbm=nws&source=lnms&fbs=ADc_l-YGrpJMQtvjQ6h14rj-dfIrn37ZoAvKM_jki0XSUf6j8VdsdenR_WIfJv2bGlxP9HiFzMIReFfA1GO3jK7impxHwVfdZsyj4bNtYymS9OPKMs2JBG1eDE4bW8yixq4vlXy9vsnCrS0gvKUKEd83vYO4iR0mGLRTcHPwqxcp4S3PV85dcTkRbMPVLbh5sVdie9Swtixp&sa=X&ved=2ahUKEwjktLbi1biUAxX8avEDHTBvNVwQ0pQJegQIExAB
+            - generic [ref=e121]: News
+        - listitem [ref=e122]:
+          - link [ref=e123] [cursor=pointer]:
+            - /url: /search?sca_esv=8a7c3553ca8d2c66&udm=2&fbs=ADc_l-YGrpJMQtvjQ6h14rj-dfIrn37ZoAvKM_jki0XSUf6j8VdsdenR_WIfJv2bGlxP9HiFzMIReFfA1GO3jK7impxHwVfdZsyj4bNtYymS9OPKMs2JBG1eDE4bW8yixq4vlXy9vsnCrS0gvKUKEd83vYO4iR0mGLRTcHPwqxcp4S3PV85dcTkRbMPVLbh5sVdie9Swtixp&q=St+Pauli+last+game+result&sa=X&ved=2ahUKEwjktLbi1biUAxX8avEDHTBvNVwQtKgLegQIFRAB
+            - generic [ref=e125]: Bilder
+        - listitem [ref=e126]:
+          - link [ref=e127] [cursor=pointer]:
+            - /url: /search?sca_esv=8a7c3553ca8d2c66&udm=7&fbs=ADc_l-YGrpJMQtvjQ6h14rj-dfIrn37ZoAvKM_jki0XSUf6j8VdsdenR_WIfJv2bGlxP9HiFzMIReFfA1GO3jK7impxHwVfdZsyj4bNtYymS9OPKMs2JBG1eDE4bW8yixq4vlXy9vsnCrS0gvKUKEd83vYO4iR0mGLRTcHPwqxcp4S3PV85dcTkRbMPVLbh5sVdie9Swtixp&q=St+Pauli+last+game+result&sa=X&ved=2ahUKEwjktLbi1biUAxX8avEDHTBvNVwQtKgLegQIFBAB
+            - generic [ref=e129]: Videos
+        - listitem [ref=e130]:
+          - link [ref=e131] [cursor=pointer]:
+            - /url: /search?sca_esv=8a7c3553ca8d2c66&udm=39&fbs=ADc_l-YGrpJMQtvjQ6h14rj-dfIrn37ZoAvKM_jki0XSUf6j8VdsdenR_WIfJv2bGlxP9HiFzMIReFfA1GO3jK7impxHwVfdZsyj4bNtYymS9OPKMs2JBG1eDE4bW8yixq4vlXy9vsnCrS0gvKUKEd83vYO4iR0mGLRTcHPwqxcp4S3PV85dcTkRbMPVLbh5sVdie9Swtixp&q=St+Pauli+last+game+result&sa=X&ved=2ahUKEwjktLbi1biUAxX8avEDHTBvNVwQs6gLegQIERAB
+            - generic [ref=e133]: Kurze Videos
+        - listitem [ref=e134]:
+          - link [ref=e135] [cursor=pointer]:
+            - /url: /search?sca_esv=8a7c3553ca8d2c66&udm=web&fbs=ADc_l-YGrpJMQtvjQ6h14rj-dfIrn37ZoAvKM_jki0XSUf6j8VdsdenR_WIfJv2bGlxP9HiFzMIReFfA1GO3jK7impxHwVfdZsyj4bNtYymS9OPKMs2JBG1eDE4bW8yixq4vlXy9vsnCrS0gvKUKEd83vYO4iR0mGLRTcHPwqxcp4S3PV85dcTkRbMPVLbh5sVdie9Swtixp&q=St+Pauli+last+game+result&sa=X&ved=2ahUKEwjktLbi1biUAxX8avEDHTBvNVwQs6gLegQIEhAB
+            - generic [ref=e137]: Web
+        - listitem [ref=e138]:
+          - button [ref=e139] [cursor=pointer]:
+            - generic [ref=e141]:
+              - generic [ref=e142]: Mehr
+              - img [ref=e144]
+    - heading [level=1] [ref=e146]: Suchergebnisse
+    - generic [ref=e152]:
+      - generic [ref=e153]: Looking for results in English?
+      - link [ref=e154] [cursor=pointer]:
+        - /url: "#"
+        - img [ref=e156]
+      - link [ref=e158] [cursor=pointer]:
+        - /url: /setprefs?sig=0_2WUWugPFWkQ2BbWGXZ7bxmzncDw%3D&source=en_ignored_notification&prev=https://www.google.com/search?q%3DSt%2BPauli%2Blast%2Bgame%2Bresult%26sei%3DR7EFateoBa_lxc8P-9TfgAM&hl=en&sa=X&ved=2ahUKEwjktLbi1biUAxX8avEDHTBvNVwQhoQCKAF6BAgNEAQ
+        - text: Change to English
+      - link [ref=e159] [cursor=pointer]:
+        - /url: "#"
+        - text: Weiter auf Deutsch anzeigen
+      - link [ref=e161] [cursor=pointer]:
+        - /url: /preferences?lang=1&hl=de&sa=X&ved=2ahUKEwjktLbi1biUAxX8avEDHTBvNVwQiIQCKAN6BAgNEAY#languages
+        - text: Spracheinstellungen
+    - main [ref=e163]:
+      - generic [ref=e167]:
+        - generic [ref=e182]:
+          - heading [level=2] [ref=e183]: Sportergebnisse
+          - generic [ref=e184]:
+            - link [ref=e185] [cursor=pointer]:
+              - generic [ref=e188]:
+                - heading [level=3] [ref=e189]:
+                  - generic [ref=e190]:
+                    - generic [ref=e191]: St. Pauli
+                    - generic [ref=e194]: FC St. Pauli
+                - generic [ref=e195]: 18. Platz Bundesliga
+            - tablist [ref=e200]:
+              - tab [selected] [ref=e201] [cursor=pointer]: SPIELE
+              - tab [ref=e202] [cursor=pointer]: TABELLE
+              - tab [ref=e203] [cursor=pointer]: SPIELER
+            - link [ref=e205]:
+              - generic [ref=e210] [cursor=pointer]:
+                - generic [ref=e211]:
+                  - generic [ref=e212]:
+                    - heading [level=3] [ref=e213]:
+                      - generic [ref=e214]:
+                        - generic [ref=e215]: Endstand
+                        - generic [ref=e216]:
+                          - generic [ref=e217]:
+                            - generic [ref=e218]: Bundesliga
+                            - text: ·
+                          - text: Sa., 9.5.
+                    - generic [ref=e221]:
+                      - generic [ref=e226]:
+                        - generic [ref=e227]: RB Leipzig
+                        - text: RB Leipzig
+                      - generic [ref=e230]:
+                        - generic [ref=e231]: "2"
+                        - generic [ref=e232]: "-"
+                        - generic [ref=e233]: "1"
+                      - generic [ref=e238]:
+                        - generic [ref=e239]: St. Pauli
+                        - text: St. Pauli
+                  - generic [ref=e241]:
+                    - generic [ref=e242]:
+                      - generic [ref=e243]:
+                        - text: Xaver Schlager
+                        - generic [ref=e248]: 45'
+                      - generic [ref=e249]:
+                        - text: Willi Orbán
+                        - generic [ref=e254]: 54'
+                    - img [ref=e257]
+                    - generic [ref=e268]:
+                      - text: Abdoulie Ceesay
+                      - generic [ref=e273]: 86'
+                - generic [ref=e278]:
+                  - link [ref=e280]:
+                    - /url: https://sport.sky.de/a/13541959?wkz=WPGSO6
+                    - generic [ref=e281]:
+                      - generic:
+                        - text: Zusammenfassung des Spiels
+                        - generic: ·
+                        - text: 1:29
+                  - link [ref=e284]:
+                    - /url: https://www.zdf.de/video/kurzfassungen/fussball-highlights-zusammenfassung-100/rb-leipzig-fc-st-pauli-saison-2025-26-100?at_medium=GoogleOneBox&at_campaign=Post-Game-Clips&at_specific=sportstudio
+                    - generic [ref=e285]:
+                      - generic:
+                        - text: Zusammenfassung des Spiels
+                        - generic: ·
+                        - text: 7:24
+            - generic [ref=e287]:
+              - group [ref=e290]:
+                - button [ref=e291] [cursor=pointer]:
+                  - generic [ref=e292]: Feedback
+              - link [ref=e293] [cursor=pointer]:
+                - generic [ref=e295]:
+                  - button [ref=e296]:
+                    - img [ref=e299]
+                  - generic [ref=e301]: Mehr ansehen
+        - generic [ref=e304]:
+          - heading [level=2] [ref=e305]: Web results
+          - generic [ref=e306]:
+            - generic [ref=e309]:
+              - link [ref=e311] [cursor=pointer]:
+                - /url: https://www.flashscore.com/team/st-pauli/ILyJuN3g/
+                - heading [level=3] [ref=e312]: "Football, Germany: St. Pauli live scores, results, fixtures"
+                - generic [ref=e317]:
+                  - generic [ref=e319]: Flashscore.com
+                  - generic [ref=e321]: https://www.flashscore.com › st-...
+              - generic [ref=e322]:
+                - generic [ref=e323]: ·
+                - link [ref=e324] [cursor=pointer]:
+                  - /url: https://translate.google.com/translate?u=https://www.flashscore.com/team/st-pauli/ILyJuN3g/&hl=de&sl=en&tl=de&client=search
+                  - text: Diese Seite übersetzen
+              - button [ref=e325] [cursor=pointer]:
+                - img [ref=e328]
+            - generic [ref=e332]:
+              - text: You are on St. Pauli live scores page in Football/Germany section. Flashscore.com offers St. Pauli livescore,
+              - emphasis [ref=e333]: final and partial results
+              - text: ", standings, home stadium"
+        - generic [ref=e337]:
+          - generic [ref=e340]:
+            - link [ref=e342] [cursor=pointer]:
+              - /url: https://www.livescore.com/en/football/team/st-pauli/5258/overview/
+              - heading [level=3] [ref=e343]: St. Pauli Scores & Latest Results Today
+              - generic [ref=e348]:
+                - generic [ref=e350]: LiveScore
+                - generic [ref=e352]: https://www.livescore.com › team
+            - generic [ref=e353]:
+              - generic [ref=e354]: ·
+              - link [ref=e355] [cursor=pointer]:
+                - /url: https://translate.google.com/translate?u=https://www.livescore.com/en/football/team/st-pauli/5258/overview/&hl=de&sl=en&tl=de&client=search
+                - text: Diese Seite übersetzen
+            - button [ref=e356] [cursor=pointer]:
+              - img [ref=e359]
+          - generic [ref=e363]:
+            - emphasis [ref=e364]: Results
+            - text: . Catch up on the latest St. Pauli matches. 09 MAYFT. RB Leipzig. St. Pauli. 2. 1 · 03 MAYFT. St. Pauli. Mainz 05.
+        - generic [ref=e368]:
+          - generic [ref=e371]:
+            - link [ref=e373] [cursor=pointer]:
+              - /url: https://ke.soccerway.com/team/st-pauli/ILyJuN3g/
+              - heading [level=3] [ref=e374]: St. Pauli stats, results, fixtures & transfers
+              - generic [ref=e379]:
+                - generic [ref=e381]: Soccerway
+                - generic [ref=e383]: https://ke.soccerway.com › team
+            - generic [ref=e384]:
+              - generic [ref=e385]: ·
+              - link [ref=e386] [cursor=pointer]:
+                - /url: https://translate.google.com/translate?u=https://ke.soccerway.com/team/st-pauli/ILyJuN3g/&hl=de&sl=en&tl=de&client=search
+                - text: Diese Seite übersetzen
+            - button [ref=e387] [cursor=pointer]:
+              - img [ref=e390]
+          - generic [ref=e394]:
+            - text: 05.04. Union Berlin Union Berlin.
+            - emphasis [ref=e395]: St
+            - text: .
+            - emphasis [ref=e396]: Pauli St
+            - text: .
+            - emphasis [ref=e397]: Pauli
+            - text: . 11. D. 22.03.
+            - emphasis [ref=e398]: St
+            - text: .
+            - emphasis [ref=e399]: Pauli St
+            - text: .
+            - emphasis [ref=e400]: Pauli
+            - text: . Freiburg Freiburg. 12. L. 13.03.
+        - generic [ref=e404]:
+          - generic [ref=e407]:
+            - link [ref=e409] [cursor=pointer]:
+              - /url: https://www.espn.com/soccer/team/_/id/270/st-pauli
+              - heading [level=3] [ref=e410]: St. Pauli Scores, Stats and Highlights
+              - generic [ref=e415]:
+                - generic [ref=e417]: ESPN
+                - generic [ref=e419]: https://www.espn.com › team
+            - generic [ref=e420]:
+              - generic [ref=e421]: ·
+              - link [ref=e422] [cursor=pointer]:
+                - /url: https://translate.google.com/translate?u=https://www.espn.com/soccer/team/_/id/270/st-pauli&hl=de&sl=en&tl=de&client=search
+                - text: Diese Seite übersetzen
+            - button [ref=e423] [cursor=pointer]:
+              - img [ref=e426]
+          - generic [ref=e430]:
+            - text: Visit ESPN for
+            - emphasis [ref=e431]: St. Pauli live scores, video highlights, and latest news
+            - text: . Find standings and the full 2025-26 season schedule.
+        - generic [ref=e435]:
+          - generic [ref=e438]:
+            - link [ref=e440] [cursor=pointer]:
+              - /url: https://www.sofascore.com/football/team/fc-st-pauli/2526
+              - heading [level=3] [ref=e441]: FC St. Pauli live score, schedule & player stats
+              - generic [ref=e446]:
+                - generic [ref=e448]: Sofascore
+                - generic [ref=e450]: https://www.sofascore.com › Germany › Bundesliga
+            - button [ref=e451] [cursor=pointer]:
+              - img [ref=e454]
+          - generic [ref=e458]:
+            - emphasis [ref=e459]: FC St. Pauli previous match was against RB Leipzig in Bundesliga
+            - text: ", the match ended with result 2 - 1 (RB Leipzig won the match). FC St."
+        - generic [ref=e463]:
+          - generic [ref=e466]:
+            - link [ref=e468] [cursor=pointer]:
+              - /url: https://www.bundesliga.com/en/bundesliga/clubs/fc-st-pauli
+              - heading [level=3] [ref=e469]: St. Pauli
+              - generic [ref=e474]:
+                - generic [ref=e476]: Bundesliga
+                - generic [ref=e478]: https://www.bundesliga.com › f...
+            - generic [ref=e479]:
+              - generic [ref=e480]: ·
+              - link [ref=e481] [cursor=pointer]:
+                - /url: https://translate.google.com/translate?u=https://www.bundesliga.com/en/bundesliga/clubs/fc-st-pauli&hl=de&sl=en&tl=de&client=search
+                - text: Diese Seite übersetzen
+            - button [ref=e482] [cursor=pointer]:
+              - img [ref=e485]
+          - generic [ref=e488]: Club, P, Won-Draw-LostW-D-L, G, +/-, Pts. 16, Wolfsburg. WOBWolfsburgWolfsburg. 33, 6-8-19, 42:68, -26, 26. 17, Heidenheim. FCHHeidenheimHeidenheim.
+        - generic [ref=e492]:
+          - generic [ref=e495]:
+            - link [ref=e497] [cursor=pointer]:
+              - /url: https://www.skysports.com/st-pauli-scores-fixtures
+              - heading [level=3] [ref=e498]: St Pauli Scores & Fixtures
+              - generic [ref=e503]:
+                - generic [ref=e505]: Sky Sports
+                - generic [ref=e507]: https://www.skysports.com › st-...
+            - generic [ref=e508]:
+              - generic [ref=e509]: ·
+              - link [ref=e510] [cursor=pointer]:
+                - /url: https://translate.google.com/translate?u=https://www.skysports.com/st-pauli-scores-fixtures&hl=de&sl=en&tl=de&client=search
+                - text: Diese Seite übersetzen
+            - button [ref=e511] [cursor=pointer]:
+              - img [ref=e514]
+          - generic [ref=e518]:
+            - emphasis [ref=e519]: Get all of the latest fixtures, live scores and results
+            - text: . Find the latest football scores ... St Pauli 1. FT. Full Time. RB Leipzig, 2. St Pauli, 1 ...
+        - generic [ref=e523]:
+          - generic [ref=e526]:
+            - link [ref=e528] [cursor=pointer]:
+              - /url: https://www.fcstpauli.com/en
+              - heading [level=3] [ref=e529]: St. Pauli
+              - generic [ref=e534]:
+                - generic [ref=e536]: FC St. Pauli
+                - generic [ref=e538]: https://www.fcstpauli.com › ...
+            - generic [ref=e539]:
+              - generic [ref=e540]: ·
+              - link [ref=e541] [cursor=pointer]:
+                - /url: https://translate.google.com/translate?u=https://www.fcstpauli.com/en&hl=de&sl=en&tl=de&client=search
+                - text: Diese Seite übersetzen
+            - button [ref=e542] [cursor=pointer]:
+              - img [ref=e545]
+          - generic [ref=e549]:
+            - text: Two corners settle it as valiant
+            - emphasis [ref=e550]: Boys in Brown lose at Leipzig
+            - text: . Our match report after the narrow defeat at Leipzig. More news. Nahaufnahme von St.
+        - generic [ref=e554]:
+          - generic [ref=e557]:
+            - link [ref=e559] [cursor=pointer]:
+              - /url: https://www.statmuse.com/fc/ask/st-pauli-last-5-games-results
+              - heading [level=3] [ref=e560]: St Pauli Last 5 Games Results
+              - generic [ref=e565]:
+                - generic [ref=e567]: StatMuse
+                - generic [ref=e569]: https://www.statmuse.com › ask
+            - generic [ref=e570]:
+              - generic [ref=e571]: ·
+              - link [ref=e572] [cursor=pointer]:
+                - /url: https://translate.google.com/translate?u=https://www.statmuse.com/fc/ask/st-pauli-last-5-games-results&hl=de&sl=en&tl=de&client=search
+                - text: Diese Seite übersetzen
+            - button [ref=e573] [cursor=pointer]:
+              - img [ref=e576]
+          - generic [ref=e580]:
+            - emphasis [ref=e581]: St
+            - text: .
+            - emphasis [ref=e582]: Pauli
+            - text: fell to RB Leipzig, 2 to 1, in Bundesliga on Saturday. Sat, May 9, 2026.
+            - emphasis [ref=e583]: St
+            - text: .
+            - emphasis [ref=e584]: Pauli
+            - text: . 1. Leipzig. 2.
+            - emphasis [ref=e585]: Final
+            - text: . Sun, May 3, 2026. Mainz. 2.
+            - emphasis [ref=e586]: St
+            - text: .
+            - emphasis [ref=e587]: Pauli
+            - text: .
+        - generic [ref=e591]:
+          - generic [ref=e594]:
+            - link [ref=e596] [cursor=pointer]:
+              - /url: https://www.fotmob.com/teams/8152/fixtures/st-pauli
+              - heading [level=3] [ref=e597]: St. Pauli - latest matches, scores and upcoming fixtures
+              - generic [ref=e602]:
+                - generic [ref=e604]: FotMob
+                - generic [ref=e606]: https://www.fotmob.com › teams
+            - generic [ref=e607]:
+              - generic [ref=e608]: ·
+              - link [ref=e609] [cursor=pointer]:
+                - /url: https://translate.google.com/translate?u=https://www.fotmob.com/teams/8152/fixtures/st-pauli&hl=de&sl=af&tl=de&client=search
+                - text: Diese Seite übersetzen
+            - button [ref=e610] [cursor=pointer]:
+              - img [ref=e613]
+          - generic [ref=e617]:
+            - emphasis [ref=e618]: SV Drochtersen/Assel. 1 - 0. St. Pauli
+            - text: · Jul 15, 2025. Club friendlies. St. Pauli. 4 - 1. Silkeborg · Jul 26, 2025. Club friendlies. Nice. 0 - 2. St. Pauli.
+      - generic [ref=e620]:
+        - generic [ref=e625]:
+          - heading [level=2] [ref=e627]: Wird auch oft gesucht
+          - generic [ref=e629]:
+            - generic [ref=e630]:
+              - link [ref=e634] [cursor=pointer]:
+                - /url: /search?sca_esv=8a7c3553ca8d2c66&q=Fc+St+pauli+last+match+today&sa=X&ved=2ahUKEwjktLbi1biUAxX8avEDHTBvNVwQ1QJ6BAg1EAE
+                - generic [ref=e635]:
+                  - generic [ref=e640]: Fc St pauli last match today
+                  - img [ref=e644]
+              - link [ref=e649] [cursor=pointer]:
+                - /url: /search?sca_esv=8a7c3553ca8d2c66&q=St+Pauli+FC+results+today&sa=X&ved=2ahUKEwjktLbi1biUAxX8avEDHTBvNVwQ1QJ6BAhBEAE
+                - generic [ref=e650]:
+                  - generic [ref=e655]: St Pauli FC results today
+                  - img [ref=e659]
+              - link [ref=e664] [cursor=pointer]:
+                - /url: /search?sca_esv=8a7c3553ca8d2c66&q=FC+St+pauli+vs+Union+Berlin+last+match&sa=X&ved=2ahUKEwjktLbi1biUAxX8avEDHTBvNVwQ1QJ6BAhDEAE
+                - generic [ref=e665]:
+                  - generic [ref=e670]: FC St pauli vs Union Berlin last match
+                  - img [ref=e674]
+              - link [ref=e679] [cursor=pointer]:
+                - /url: /search?sca_esv=8a7c3553ca8d2c66&q=FC+St+pauli+last+5+Games&sa=X&ved=2ahUKEwjktLbi1biUAxX8avEDHTBvNVwQ1QJ6BAhCEAE
+                - generic [ref=e680]:
+                  - generic [ref=e685]: FC St pauli last 5 Games
+                  - img [ref=e689]
+            - generic [ref=e691]:
+              - link [ref=e695] [cursor=pointer]:
+                - /url: /search?sca_esv=8a7c3553ca8d2c66&q=FC+St+Pauli+match+today&sa=X&ved=2ahUKEwjktLbi1biUAxX8avEDHTBvNVwQ1QJ6BAhAEAE
+                - generic [ref=e696]:
+                  - generic [ref=e701]: FC St Pauli match today
+                  - img [ref=e705]
+              - link [ref=e710] [cursor=pointer]:
+                - /url: /search?sca_esv=8a7c3553ca8d2c66&q=St+Pauli+next+match&sa=X&ved=2ahUKEwjktLbi1biUAxX8avEDHTBvNVwQ1QJ6BAg-EAE
+                - generic [ref=e711]:
+                  - generic [ref=e716]: St Pauli next match
+                  - img [ref=e720]
+              - link [ref=e725] [cursor=pointer]:
+                - /url: /search?sca_esv=8a7c3553ca8d2c66&q=FC+St+pauli+League+table&sa=X&ved=2ahUKEwjktLbi1biUAxX8avEDHTBvNVwQ1QJ6BAg7EAE
+                - generic [ref=e726]:
+                  - generic [ref=e731]: FC St pauli League table
+                  - img [ref=e735]
+              - link [ref=e740] [cursor=pointer]:
+                - /url: /search?sca_esv=8a7c3553ca8d2c66&q=St+pauli+Livescore&sa=X&ved=2ahUKEwjktLbi1biUAxX8avEDHTBvNVwQ1QJ6BAg3EAE
+                - generic [ref=e741]:
+                  - generic [ref=e746]: St pauli Livescore
+                  - img [ref=e750]
+        - navigation [ref=e752]:
+          - heading [level=1] [ref=e753]: Seitennavigation
+          - text: "1"
+          - link [ref=e756] [cursor=pointer]:
+            - /url: /search?q=St+Pauli+last+game+result&sca_esv=8a7c3553ca8d2c66&ei=R7EFaqT1D_zVxc8PsN7V4QU&start=10&sa=N&sstk=Af77f_e1GKNQGL6euIyhMtPk7RkML-geOXndNbzlOud_pzFGziMzDhwQfnSX3Y-2gkAqp5lRIyIMddr3fcgjA1LphWtiXt6Q8SCX5g&ved=2ahUKEwjktLbi1biUAxX8avEDHTBvNVwQ8tMDegQIMxAE
+            - text: "2"
+          - link [ref=e758] [cursor=pointer]:
+            - /url: /search?q=St+Pauli+last+game+result&sca_esv=8a7c3553ca8d2c66&ei=R7EFaqT1D_zVxc8PsN7V4QU&start=20&sa=N&sstk=Af77f_e1GKNQGL6euIyhMtPk7RkML-geOXndNbzlOud_pzFGziMzDhwQfnSX3Y-2gkAqp5lRIyIMddr3fcgjA1LphWtiXt6Q8SCX5g&ved=2ahUKEwjktLbi1biUAxX8avEDHTBvNVwQ8tMDegQIMxAG
+            - text: "3"
+          - link [ref=e760] [cursor=pointer]:
+            - /url: /search?q=St+Pauli+last+game+result&sca_esv=8a7c3553ca8d2c66&ei=R7EFaqT1D_zVxc8PsN7V4QU&start=30&sa=N&sstk=Af77f_e1GKNQGL6euIyhMtPk7RkML-geOXndNbzlOud_pzFGziMzDhwQfnSX3Y-2gkAqp5lRIyIMddr3fcgjA1LphWtiXt6Q8SCX5g&ved=2ahUKEwjktLbi1biUAxX8avEDHTBvNVwQ8tMDegQIMxAI
+            - text: "4"
+          - link [ref=e762] [cursor=pointer]:
+            - /url: /search?q=St+Pauli+last+game+result&sca_esv=8a7c3553ca8d2c66&ei=R7EFaqT1D_zVxc8PsN7V4QU&start=40&sa=N&sstk=Af77f_e1GKNQGL6euIyhMtPk7RkML-geOXndNbzlOud_pzFGziMzDhwQfnSX3Y-2gkAqp5lRIyIMddr3fcgjA1LphWtiXt6Q8SCX5g&ved=2ahUKEwjktLbi1biUAxX8avEDHTBvNVwQ8tMDegQIMxAK
+            - text: "5"
+          - link [ref=e764] [cursor=pointer]:
+            - /url: /search?q=St+Pauli+last+game+result&sca_esv=8a7c3553ca8d2c66&ei=R7EFaqT1D_zVxc8PsN7V4QU&start=50&sa=N&sstk=Af77f_e1GKNQGL6euIyhMtPk7RkML-geOXndNbzlOud_pzFGziMzDhwQfnSX3Y-2gkAqp5lRIyIMddr3fcgjA1LphWtiXt6Q8SCX5g&ved=2ahUKEwjktLbi1biUAxX8avEDHTBvNVwQ8tMDegQIMxAM
+            - text: "6"
+          - link [ref=e766] [cursor=pointer]:
+            - /url: /search?q=St+Pauli+last+game+result&sca_esv=8a7c3553ca8d2c66&ei=R7EFaqT1D_zVxc8PsN7V4QU&start=60&sa=N&sstk=Af77f_e1GKNQGL6euIyhMtPk7RkML-geOXndNbzlOud_pzFGziMzDhwQfnSX3Y-2gkAqp5lRIyIMddr3fcgjA1LphWtiXt6Q8SCX5g&ved=2ahUKEwjktLbi1biUAxX8avEDHTBvNVwQ8tMDegQIMxAO
+            - text: "7"
+          - link [ref=e768] [cursor=pointer]:
+            - /url: /search?q=St+Pauli+last+game+result&sca_esv=8a7c3553ca8d2c66&ei=R7EFaqT1D_zVxc8PsN7V4QU&start=70&sa=N&sstk=Af77f_e1GKNQGL6euIyhMtPk7RkML-geOXndNbzlOud_pzFGziMzDhwQfnSX3Y-2gkAqp5lRIyIMddr3fcgjA1LphWtiXt6Q8SCX5g&ved=2ahUKEwjktLbi1biUAxX8avEDHTBvNVwQ8tMDegQIMxAQ
+            - text: "8"
+          - link [ref=e770] [cursor=pointer]:
+            - /url: /search?q=St+Pauli+last+game+result&sca_esv=8a7c3553ca8d2c66&ei=R7EFaqT1D_zVxc8PsN7V4QU&start=80&sa=N&sstk=Af77f_e1GKNQGL6euIyhMtPk7RkML-geOXndNbzlOud_pzFGziMzDhwQfnSX3Y-2gkAqp5lRIyIMddr3fcgjA1LphWtiXt6Q8SCX5g&ved=2ahUKEwjktLbi1biUAxX8avEDHTBvNVwQ8tMDegQIMxAS
+            - text: "9"
+          - link [ref=e772] [cursor=pointer]:
+            - /url: /search?q=St+Pauli+last+game+result&sca_esv=8a7c3553ca8d2c66&ei=R7EFaqT1D_zVxc8PsN7V4QU&start=90&sa=N&sstk=Af77f_e1GKNQGL6euIyhMtPk7RkML-geOXndNbzlOud_pzFGziMzDhwQfnSX3Y-2gkAqp5lRIyIMddr3fcgjA1LphWtiXt6Q8SCX5g&ved=2ahUKEwjktLbi1biUAxX8avEDHTBvNVwQ8tMDegQIMxAU
+            - text: "10"
+          - heading [level=2] [ref=e774]:
+            - link [ref=e775] [cursor=pointer]:
+              - /url: /search?q=St+Pauli+last+game+result&sca_esv=8a7c3553ca8d2c66&ei=R7EFaqT1D_zVxc8PsN7V4QU&start=10&sa=N&sstk=Af77f_e1GKNQGL6euIyhMtPk7RkML-geOXndNbzlOud_pzFGziMzDhwQfnSX3Y-2gkAqp5lRIyIMddr3fcgjA1LphWtiXt6Q8SCX5g&ved=2ahUKEwjktLbi1biUAxX8avEDHTBvNVwQ8NMDegQIMxAW
+              - generic [ref=e777]: Weiter
+    - contentinfo [ref=e778]:
+      - heading [level=1] [ref=e779]: Fußzeilenlinks

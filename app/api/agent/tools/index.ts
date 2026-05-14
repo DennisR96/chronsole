@@ -3,6 +3,13 @@ import { fileReadTool } from './fileRead';
 import { fileWriteTool } from './fileWrite';
 import { directoryListTool } from './directoryList';
 import { fileDeleteTool } from './fileDelete';
+
+import { webStartTool } from './webStart';
+import { webOpenTool } from './webOpen';
+import { webReadTool } from './webRead';
+import { webScreenTool } from './webScreen';
+import { webActTool } from './webAct';
+
 import type { AgentTool, ToolExecutionContext } from './types';
 
 const toolRegistry: AgentTool[] = [
@@ -11,6 +18,12 @@ const toolRegistry: AgentTool[] = [
   fileWriteTool,
   directoryListTool,
   fileDeleteTool,
+
+  webStartTool,
+  webOpenTool,
+  webReadTool,
+  webScreenTool,
+  webActTool,
 ];
 
 export const TOOLS = toolRegistry.map((tool) => tool.definition);
