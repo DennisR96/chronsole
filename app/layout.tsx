@@ -34,24 +34,31 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${chakraPetch.variable} ${jetBrainsMono.variable} h-full antialiased selection:bg-accent selection:text-accent-invert`}
+      className={`${chakraPetch.variable} ${jetBrainsMono.variable} dark h-full antialiased selection:bg-accent selection:text-bg-surface`}
       suppressHydrationWarning
     >
       <head>
-
-
-        <link rel="preload" href="/fonts/JetBrainsMonoNerdFont-Medium.ttf"
-          as="font" type="font/ttf" crossOrigin="anonymous" />
-        <link rel="preload" href="/fonts/JetBrainsMonoNerdFont-Regular.ttf"
-          as="font" type="font/ttf" crossOrigin="anonymous" />
+        <link
+          rel="preload"
+          href="/fonts/JetBrainsMonoNerdFont-Medium.ttf"
+          as="font"
+          type="font/ttf"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          href="/fonts/JetBrainsMonoNerdFont-Regular.ttf"
+          as="font"
+          type="font/ttf"
+          crossOrigin="anonymous"
+        />
       </head>
-
 
       <body className="min-h-full flex flex-col overflow-hidden relative">
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          defaultTheme="dark"
+          enableSystem={false}
           disableTransitionOnChange
         >
           {children}

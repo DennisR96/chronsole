@@ -3,9 +3,11 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  
+  --font-chakra: var(--font-chakra);
+
   --color-bg-base: var(--bg-base);
   --color-bg-surface: var(--bg-surface);
   --color-bg-raised: var(--bg-raised);
@@ -18,38 +20,227 @@
   --color-accent: var(--accent);
   --color-accent-sub: var(--accent-sub);
 
-  /* Custom Animations */
   --animate-grid-flow: grid-flow 20s linear infinite;
   --animate-blink: blink 1s step-end infinite;
   --animate-fade-in-up: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes grid-flow {
-  0% { transform: translateY(0) translateX(0); }
-  100% { transform: translateY(32px) translateX(32px); }
+  0% {
+    transform: translateY(0) translateX(0);
+  }
+
+  100% {
+    transform: translateY(32px) translateX(32px);
+  }
+}
+
+@keyframes terminal-grid-drift {
+  0% {
+    background-position: 0 0, 0 0;
+  }
+
+  100% {
+    background-position: 96px 64px, 64px 96px;
+  }
+}
+
+@keyframes terminal-grid-drift-large {
+  0% {
+    background-position: 0 0, 0 0;
+  }
+
+  100% {
+    background-position: -160px 96px, 96px -160px;
+  }
+}
+
+@keyframes terminal-sweep {
+  0% {
+    transform: translateX(-20%) rotate(0deg);
+  }
+
+  100% {
+    transform: translateX(20%) rotate(360deg);
+  }
+}
+
+@keyframes terminal-orb-one {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.7;
+  }
+
+  50% {
+    transform: translate3d(80px, -40px, 0) scale(1.12);
+    opacity: 1;
+  }
+}
+
+@keyframes terminal-orb-two {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.5;
+  }
+
+  50% {
+    transform: translate3d(-70px, 35px, 0) scale(1.15);
+    opacity: 0.85;
+  }
+}
+
+@keyframes terminal-scan {
+  0% {
+    transform: translateY(-140px);
+    opacity: 0;
+  }
+
+  12% {
+    opacity: 0.55;
+  }
+
+  50% {
+    opacity: 0.2;
+  }
+
+  100% {
+    transform: translateY(110vh);
+    opacity: 0;
+  }
+}
+
+@keyframes terminal-noise {
+  0% {
+    transform: translate(0, 0);
+  }
+
+  10% {
+    transform: translate(-1%, -1%);
+  }
+
+  20% {
+    transform: translate(1%, 1%);
+  }
+
+  30% {
+    transform: translate(-2%, 1%);
+  }
+
+  40% {
+    transform: translate(2%, -1%);
+  }
+
+  50% {
+    transform: translate(-1%, 2%);
+  }
+
+  60% {
+    transform: translate(1%, -2%);
+  }
+
+  70% {
+    transform: translate(2%, 1%);
+  }
+
+  80% {
+    transform: translate(-2%, -1%);
+  }
+
+  90% {
+    transform: translate(1%, 2%);
+  }
+
+  100% {
+    transform: translate(0, 0);
+  }
 }
 
 @keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0;
+  }
 }
 
 @keyframes fadeInUp {
-  0% { opacity: 0; transform: translateY(20px); }
-  100% { opacity: 1; transform: translateY(0); }
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.terminal-grid {
+  background-image:
+    linear-gradient(to right, rgba(196, 142, 255, 0.35) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(196, 142, 255, 0.35) 1px, transparent 1px);
+  background-size: 32px 32px;
+  animation: terminal-grid-drift 14s linear infinite;
+}
+
+.terminal-grid-large {
+  background-image:
+    linear-gradient(to right, rgba(139, 92, 246, 0.45) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(139, 92, 246, 0.45) 1px, transparent 1px);
+  background-size: 128px 128px;
+  mask-image: radial-gradient(circle at center, black, transparent 72%);
+  animation: terminal-grid-drift-large 26s linear infinite;
+}
+
+.terminal-sweep {
+  background: conic-gradient(
+    from 90deg at 50% 50%,
+    transparent 0deg,
+    rgba(196, 142, 255, 0.18) 18deg,
+    transparent 46deg,
+    transparent 360deg
+  );
+  animation: terminal-sweep 24s linear infinite;
+}
+
+.terminal-orb-one {
+  animation: terminal-orb-one 10s ease-in-out infinite;
+}
+
+.terminal-orb-two {
+  animation: terminal-orb-two 13s ease-in-out infinite;
+}
+
+.terminal-scan {
+  animation: terminal-scan 7s ease-in-out infinite;
+}
+
+.terminal-noise {
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.85) 0, transparent 1px),
+    radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.85) 0, transparent 1px),
+    radial-gradient(circle at 40% 80%, rgba(255, 255, 255, 0.85) 0, transparent 1px),
+    radial-gradient(circle at 60% 20%, rgba(255, 255, 255, 0.85) 0, transparent 1px);
+  background-size: 18px 18px;
+  animation: terminal-noise 1.6s steps(2) infinite;
 }
 
 @font-face {
-  font-family: 'JetBrainsMono Nerd Font';
-  src: url('/fonts/JetBrainsMonoNerdFont-Regular.ttf') format('truetype');
+  font-family: "JetBrainsMono Nerd Font";
+  src: url("/fonts/JetBrainsMonoNerdFont-Regular.ttf") format("truetype");
   font-weight: 400;
   font-style: normal;
   font-display: block;
 }
 
 @font-face {
-  font-family: 'JetBrainsMono Nerd Font';
-  src: url('/fonts/JetBrainsMonoNerdFont-Medium.ttf') format('truetype');
+  font-family: "JetBrainsMono Nerd Font";
+  src: url("/fonts/JetBrainsMonoNerdFont-Medium.ttf") format("truetype");
   font-weight: 500;
   font-style: normal;
   font-display: block;
@@ -59,34 +250,37 @@
   --background: #ffffff;
   --foreground: #171717;
 
-  --bg-base:    #f3f4f6;
+  --bg-base: #f3f4f6;
   --bg-surface: #ffffff;
-  --bg-raised:  #f9fafb;
+  --bg-raised: #f9fafb;
   --bg-overlay: #f3f4f6;
-  --border:     #e5e7eb;
+  --border: #e5e7eb;
   --border-sub: #f3f4f6;
-  --text-1:     #111827;
-  --text-2:     #4b5563;
-  --text-3:     #9ca3af;
-  --accent:     #84cc16;
-  --accent-sub: #84cc1640; 
+  --text-1: #111827;
+  --text-2: #4b5563;
+  --text-3: #9ca3af;
+
+  --accent: #c48eff;
+  --accent-sub: #c48eff55;
 }
 
 .dark {
-  --background: #050505;
-  --foreground: #ededed;
+  --background: #05040a;
+  --foreground: #f2ecff;
 
-  --bg-base:    #0A0A0C;
-  --bg-surface: #121316;
-  --bg-raised:  #1e2029;
-  --bg-overlay: #262933;
-  --border:     #2e3140;
-  --border-sub: #1d2030;
-  --text-1:     #e2e4e9;
-  --text-2:     #9ba1b0;
-  --text-3:     #5a6070;
-  --accent:     #CCFF00;
-  --accent-sub: #CCFF0033;
+  --bg-base: #080711;
+  --bg-surface: #0d0b14;
+  --bg-raised: #171224;
+  --bg-overlay: #211936;
+  --border: #33264d;
+  --border-sub: #20182f;
+
+  --text-1: #f0eaff;
+  --text-2: #b9acd2;
+  --text-3: #746989;
+
+  --accent: #c48eff;
+  --accent-sub: #c48eff55;
 }
 
 body {
@@ -98,6 +292,7 @@ body {
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -106,13 +301,16 @@ body {
 .custom-scrollbar::-webkit-scrollbar {
   width: 8px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: var(--border);
   border-radius: 4px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: var(--text-3);
 }
