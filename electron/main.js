@@ -1,5 +1,12 @@
 // electron/main.js
-const { app, BrowserWindow, shell } = require("electron");
+const {
+  app,
+  BrowserWindow,
+  shell,
+  ipcMain,
+  session,
+  dialog,
+} = require("electron");
 const path = require("path");
 const { spawn } = require("child_process");
 
@@ -45,18 +52,20 @@ function createWindow() {
     title: "CHRONOSOLE",
     backgroundColor: "#050509",
     show: false,
+
+    frame: false,
+    autoHideMenuBar: true,
+
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
 
-      // Security defaults.
-      nodeIntegration: false,
-      contextIsolation: true,
-
-      // Needed only because we add an Electron <webview> browser page.
+      /**
+       * Enables <webview> in your React/Next page.
+       */
       webviewTag: true,
 
-      // Keep false unless you explicitly need Electron sandboxing.
-      // nodeIntegration is still disabled above.
+      nodeIntegration: false,
+      contextIsolation: true,
       sandbox: false,
     },
   });
@@ -71,45 +80,78 @@ function createWindow() {
 
   mainWindow.loadURL(APP_URL);
 
-  /**
-   * Any window.open / target="_blank" from the main app opens externally.
-   * This prevents random extra Electron windows from being created.
-   */
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url);
     return { action: "deny" };
   });
 
-  /**
-   * Harden <webview> usage.
-   * Remote pages must not get Node access.
-   */
-  mainWindow.webContents.on(
-    "will-attach-webview",
-    (event, webPreferences, params) => {
-      delete webPreferences.preload;
-
-      webPreferences.nodeIntegration = false;
-      webPreferences.contextIsolation = true;
-      webPreferences.sandbox = true;
-
-      try {
-        const parsedUrl = new URL(params.src);
-        const allowedProtocols = ["https:", "http:"];
-
-        if (!allowedProtocols.includes(parsedUrl.protocol)) {
-          event.preventDefault();
-        }
-      } catch {
-        event.preventDefault();
-      }
+  mainWindow.webContents.on("will-navigate", (event, url) => {
+    if (!url.startsWith(APP_URL)) {
+      event.preventDefault();
+      shell.openExternal(url);
     }
+  });
+
+  mainWindow.webContents.on(
+    "did-fail-load",
+    (_event, errorCode, errorDescription, validatedURL) => {
+      if (errorCode === -3) return;
+
+      console.error("[electron] Main window failed to load:", {
+        errorCode,
+        errorDescription,
+        validatedURL,
+      });
+    },
   );
 
   mainWindow.on("closed", () => {
     mainWindow = null;
   });
 }
+
+/**
+ * Folder picker for the file explorer.
+ */
+ipcMain.handle("dialog:select-directory", async () => {
+  const parentWindow = mainWindow ?? BrowserWindow.getFocusedWindow();
+
+  const result = await dialog.showOpenDialog(parentWindow ?? undefined, {
+    title: "Select working directory",
+    buttonLabel: "Select Folder",
+    properties: ["openDirectory", "createDirectory"],
+  });
+
+  if (result.canceled || result.filePaths.length === 0) {
+    return null;
+  }
+
+  return result.filePaths[0];
+});
+
+/**
+ * Optional custom window controls.
+ */
+ipcMain.handle("window:minimize", () => {
+  const win = BrowserWindow.getFocusedWindow();
+  if (win) win.minimize();
+});
+
+ipcMain.handle("window:toggle-maximize", () => {
+  const win = BrowserWindow.getFocusedWindow();
+  if (!win) return;
+
+  if (win.isMaximized()) {
+    win.unmaximize();
+  } else {
+    win.maximize();
+  }
+});
+
+ipcMain.handle("window:close", () => {
+  const win = BrowserWindow.getFocusedWindow();
+  if (win) win.close();
+});
 
 function stopNextServer() {
   if (!nextProcess) return;
@@ -124,12 +166,26 @@ function stopNextServer() {
 }
 
 app.whenReady().then(() => {
+  /**
+   * Helps embedded pages request normal browser permissions.
+   * You can tighten this later per origin if needed.
+   */
+  session.defaultSession.setPermissionRequestHandler(
+    (_webContents, permission, callback) => {
+      const allowedPermissions = new Set([
+        "media",
+        "display-capture",
+        "fullscreen",
+        "notifications",
+        "pointerLock",
+      ]);
+
+      callback(allowedPermissions.has(permission));
+    },
+  );
+
   startNextServer();
 
-  /**
-   * In dev, wait-on in package.json already waits before Electron starts.
-   * In production, this small delay gives the packaged Next server time to boot.
-   */
   setTimeout(() => {
     createWindow();
   }, isDev ? 0 : 1500);

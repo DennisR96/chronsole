@@ -5,6 +5,7 @@ import ReactMarkdown from "react-markdown";
 import { Eye, FileText, FileType, ImageIcon } from "lucide-react";
 import CodeMirror from "@uiw/react-codemirror";
 import { EditorView } from "@codemirror/view";
+import { vim } from "@replit/codemirror-vim";
 
 import { oneDark } from "@codemirror/theme-one-dark";
 import { javascript } from "@codemirror/lang-javascript";
@@ -27,6 +28,7 @@ interface FileViewerProps {
   isDirty: boolean;
   isSaving: boolean;
   saveError: string;
+  vimMode: boolean;
   onChangeContent: (nextContent: string) => void;
   onSave: () => void;
 }
@@ -41,7 +43,7 @@ function getFileExtension(fileName: string) {
 
 function isImageFile(fileName: string) {
   return ["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "ico"].includes(
-    getFileExtension(fileName)
+    getFileExtension(fileName),
   );
 }
 
@@ -146,15 +148,18 @@ function CodeViewer({
   fileName,
   content,
   editable,
+  vimMode,
   onChange,
 }: {
   fileName: string;
   content: string;
   editable: boolean;
+  vimMode: boolean;
   onChange: (value: string) => void;
 }) {
   const extensions = useMemo(() => {
     return [
+      ...(vimMode ? [vim()] : []),
       ...getCodeMirrorExtensions(fileName),
       EditorView.lineWrapping,
       EditorView.theme({
@@ -198,7 +203,7 @@ function CodeViewer({
         },
       }),
     ];
-  }, [fileName]);
+  }, [fileName, vimMode]);
 
   return (
     <div className="h-full min-h-0 overflow-hidden rounded-lg border border-border-main bg-bg-raised">
@@ -270,6 +275,7 @@ export function FileViewer({
   isDirty,
   isSaving,
   saveError,
+  vimMode,
   onChangeContent,
   onSave,
 }: FileViewerProps) {
@@ -283,7 +289,7 @@ export function FileViewer({
 
   if (!filePath) {
     return (
-      <div className="flex-1 min-h-0 flex flex-col items-center justify-center font-mono text-text-3 gap-2">
+      <div className="flex-1 min-h-0 flex flex-col items-center justify-center font-mono text-text-3 gap-2 bg-bg-base">
         <Eye size={24} className="opacity-40" />
 
         <div className="text-[11px] tracking-wider">
@@ -303,7 +309,7 @@ export function FileViewer({
   const HeaderIcon = isImage ? ImageIcon : isPdf ? FileType : FileText;
 
   return (
-    <div className="flex-1 min-h-0 min-w-0 h-full flex flex-col bg-bg-base border-l border-border-main">
+    <div className="flex-1 min-h-0 min-w-0 h-full flex flex-col bg-bg-base">
       <div className="flex h-9 shrink-0 items-center gap-2 border-b border-border-main bg-bg-surface px-4 font-mono text-xs text-text-2">
         <HeaderIcon size={12} />
 
@@ -328,6 +334,7 @@ export function FileViewer({
             onClick={onSave}
             disabled={!isDirty || isSaving}
             className="ml-2 rounded border border-border-main px-2 py-0.5 text-[10px] text-text-2 hover:text-text-1 hover:bg-bg-hover disabled:opacity-40 disabled:cursor-not-allowed"
+            title="Ctrl/Cmd + S"
           >
             {isSaving ? "SAVING..." : "SAVE"}
           </button>
@@ -336,6 +343,12 @@ export function FileViewer({
         {saveError && (
           <span className="text-[10px] text-red-400 truncate">
             {saveError}
+          </span>
+        )}
+
+        {canEdit && vimMode && (
+          <span className="ml-2 rounded border border-accent/40 px-2 py-0.5 text-[10px] uppercase tracking-widest text-accent">
+            VIM
           </span>
         )}
 
@@ -356,6 +369,7 @@ export function FileViewer({
                 fileName={fileName}
                 content={content}
                 editable
+                vimMode={vimMode}
                 onChange={onChangeContent}
               />
             </div>
@@ -377,6 +391,7 @@ export function FileViewer({
             fileName={fileName}
             content={content}
             editable
+            vimMode={vimMode}
             onChange={onChangeContent}
           />
         )}

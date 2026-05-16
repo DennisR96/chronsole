@@ -1,26 +1,44 @@
 "use client";
 
 import { useState } from "react";
+import { FileIcon, defaultStyles } from "react-file-icon";
 
 export interface FileNode {
   id: string;
   name: string;
   type: "file" | "folder";
   children?: FileNode[];
+  hasLoadedChildren?: boolean;
 }
 
 interface FileTreeProps {
   data: FileNode[];
   activeFileId: string;
-  workingDirectory: string;
-  onSelectFile: (path: string) => void;
+  onSelectFile: (node: FileNode) => void;
+  onLoadFolder: (node: FileNode) => Promise<FileNode[]>;
+}
+
+function getFileExtension(fileName: string) {
+  const lowerFileName = fileName.toLowerCase();
+
+  if (lowerFileName === "dockerfile") return "dockerfile";
+
+  const parts = fileName.split(".");
+
+  if (parts.length <= 1) return "";
+
+  return parts.pop()?.toLowerCase() || "";
+}
+
+function getFileIconStyles(extension: string) {
+  return defaultStyles[extension as keyof typeof defaultStyles] || {};
 }
 
 export function FileTree({
   data,
   activeFileId,
-  workingDirectory,
   onSelectFile,
+  onLoadFolder,
 }: FileTreeProps) {
   if (data.length === 0) {
     return (
@@ -37,8 +55,8 @@ export function FileTree({
           key={node.id}
           node={node}
           activeFileId={activeFileId}
-          workingDirectory={workingDirectory}
           onSelectFile={onSelectFile}
+          onLoadFolder={onLoadFolder}
           level={0}
         />
       ))}
@@ -49,73 +67,52 @@ export function FileTree({
 interface TreeNodeProps {
   node: FileNode;
   activeFileId: string;
-  workingDirectory: string;
-  onSelectFile: (path: string) => void;
+  onSelectFile: (node: FileNode) => void;
+  onLoadFolder: (node: FileNode) => Promise<FileNode[]>;
   level: number;
 }
 
 function TreeNode({
   node,
   activeFileId,
-  workingDirectory,
   onSelectFile,
+  onLoadFolder,
   level,
 }: TreeNodeProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [children, setChildren] = useState<FileNode[]>(node.children || []);
   const [hasLoadedChildren, setHasLoadedChildren] = useState(
-    Boolean(node.children && node.children.length > 0)
+    Boolean(node.hasLoadedChildren),
   );
   const [isLoading, setIsLoading] = useState(false);
 
   const isFolder = node.type === "folder";
   const isActive = activeFileId === node.id;
-
-  const loadChildren = async () => {
-    setIsLoading(true);
-
-    try {
-      const res = await fetch(
-        `/api/files?cwd=${encodeURIComponent(
-          workingDirectory
-        )}&path=${encodeURIComponent(node.id)}`
-      );
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || `HTTP ${res.status}`);
-      }
-
-      const data = await res.json();
-
-      if (Array.isArray(data)) {
-        setChildren(data);
-      } else {
-        setChildren([]);
-      }
-
-      setHasLoadedChildren(true);
-    } catch (error) {
-      console.error("Failed to load folder:", error);
-      setChildren([]);
-      setHasLoadedChildren(true);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const extension = getFileExtension(node.name);
 
   const handleToggle = async () => {
     if (!isFolder) {
-      onSelectFile(node.id);
+      onSelectFile(node);
       return;
     }
 
     const shouldOpen = !isOpen;
-
     setIsOpen(shouldOpen);
 
     if (shouldOpen && !hasLoadedChildren) {
-      await loadChildren();
+      setIsLoading(true);
+
+      try {
+        const loadedChildren = await onLoadFolder(node);
+        setChildren(loadedChildren);
+        setHasLoadedChildren(true);
+      } catch (error) {
+        console.error("Failed to load folder:", error);
+        setChildren([]);
+        setHasLoadedChildren(true);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -133,8 +130,13 @@ function TreeNode({
             {isLoading ? "⟳" : isOpen ? "▼" : "▶"}
           </span>
         ) : (
-          <span className="w-4 h-4 flex items-center justify-center text-text-3 shrink-0">
-            📄
+          <span className="w-4 h-4 flex items-center justify-center shrink-0">
+            <span className="w-3.5 h-3.5 block">
+              <FileIcon
+                extension={extension}
+                {...getFileIconStyles(extension)}
+              />
+            </span>
           </span>
         )}
 
@@ -163,8 +165,8 @@ function TreeNode({
                 key={childNode.id}
                 node={childNode}
                 activeFileId={activeFileId}
-                workingDirectory={workingDirectory}
                 onSelectFile={onSelectFile}
+                onLoadFolder={onLoadFolder}
                 level={level + 1}
               />
             ))

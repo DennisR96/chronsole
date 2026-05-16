@@ -182,16 +182,16 @@
 
 .terminal-grid {
   background-image:
-    linear-gradient(to right, rgba(196, 142, 255, 0.35) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(196, 142, 255, 0.35) 1px, transparent 1px);
+    linear-gradient(to right, rgba(215, 255, 0, 0.35) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(215, 255, 0, 0.35) 1px, transparent 1px);
   background-size: 32px 32px;
   animation: terminal-grid-drift 14s linear infinite;
 }
 
 .terminal-grid-large {
   background-image:
-    linear-gradient(to right, rgba(139, 92, 246, 0.45) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(139, 92, 246, 0.45) 1px, transparent 1px);
+    linear-gradient(to right, rgba(215, 255, 0, 0.45) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(215, 255, 0, 0.45) 1px, transparent 1px);
   background-size: 128px 128px;
   mask-image: radial-gradient(circle at center, black, transparent 72%);
   animation: terminal-grid-drift-large 26s linear infinite;
@@ -201,7 +201,7 @@
   background: conic-gradient(
     from 90deg at 50% 50%,
     transparent 0deg,
-    rgba(196, 142, 255, 0.18) 18deg,
+    rgba(215, 255, 0, 0.18) 18deg,
     transparent 46deg,
     transparent 360deg
   );
@@ -260,8 +260,8 @@
   --text-2: #4b5563;
   --text-3: #9ca3af;
 
-  --accent: #c48eff;
-  --accent-sub: #c48eff55;
+  --accent: #d7ff00;
+  --accent-sub: #d7ff0055;
 }
 
 .dark {
@@ -279,8 +279,8 @@
   --text-2: #b9acd2;
   --text-3: #746989;
 
-  --accent: #c48eff;
-  --accent-sub: #c48eff55;
+  --accent: #d7ff00;
+  --accent-sub: #d7ff0055;
 }
 
 body {

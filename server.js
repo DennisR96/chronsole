@@ -1,5 +1,6 @@
 const { createServer } = require("http");
 const { parse } = require("url");
+const crypto = require("crypto");
 const next = require("next");
 const { WebSocketServer } = require("ws");
 const pty = require("node-pty");
@@ -13,6 +14,9 @@ const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
 
 const shell = os.platform() === "win32" ? "powershell.exe" : "/bin/zsh";
+
+const TERMINAL_IDLE_TIMEOUT_MS = 10 * 60 * 1000;
+const TERMINAL_BUFFER_LIMIT = 200_000;
 
 function getCpuUsageSample(previousCpus) {
   const cpus = os.cpus();
@@ -63,12 +67,13 @@ app.prepare().then(() => {
   });
 
   /**
-   * CLI terminal WebSocket
-   * Route: /ws
+   * Persistent CLI terminal sessions
+   * Route: /ws?sessionId=...
    */
   const terminalWss = new WebSocketServer({ noServer: true });
+  const terminalSessions = new Map();
 
-  terminalWss.on("connection", (ws) => {
+  function createTerminalSession(sessionId) {
     const ptyProcess = pty.spawn(shell, [], {
       name: "xterm-256color",
       cols: 80,
@@ -77,11 +82,119 @@ app.prepare().then(() => {
       env: process.env,
     });
 
+    const session = {
+      id: sessionId,
+      ptyProcess,
+      sockets: new Set(),
+      buffer: "",
+      killTimer: null,
+    };
+
     ptyProcess.onData((data) => {
-      if (ws.readyState === ws.OPEN) {
-        ws.send(data);
+      session.buffer += data;
+
+      if (session.buffer.length > TERMINAL_BUFFER_LIMIT) {
+        session.buffer = session.buffer.slice(-TERMINAL_BUFFER_LIMIT);
+      }
+
+      for (const socket of session.sockets) {
+        if (socket.readyState === socket.OPEN) {
+          socket.send(data);
+        }
       }
     });
+
+    ptyProcess.onExit(() => {
+      terminalSessions.delete(sessionId);
+
+      for (const socket of session.sockets) {
+        try {
+          socket.close();
+        } catch { }
+      }
+
+      session.sockets.clear();
+
+      if (session.killTimer) {
+        clearTimeout(session.killTimer);
+        session.killTimer = null;
+      }
+    });
+
+    terminalSessions.set(sessionId, session);
+
+    return session;
+  }
+
+  function getTerminalSession(sessionId) {
+    const existing = terminalSessions.get(sessionId);
+
+    if (existing) {
+      if (existing.killTimer) {
+        clearTimeout(existing.killTimer);
+        existing.killTimer = null;
+      }
+
+      return existing;
+    }
+
+    return createTerminalSession(sessionId);
+  }
+
+  function closeTerminalSession(session) {
+    if (session.killTimer) {
+      clearTimeout(session.killTimer);
+      session.killTimer = null;
+    }
+
+    terminalSessions.delete(session.id);
+
+    for (const socket of session.sockets) {
+      try {
+        socket.close();
+      } catch { }
+    }
+
+    session.sockets.clear();
+
+    try {
+      session.ptyProcess.kill();
+    } catch { }
+  }
+
+  function scheduleTerminalCleanup(session) {
+    if (session.sockets.size > 0) return;
+    if (session.killTimer) return;
+
+    session.killTimer = setTimeout(() => {
+      if (session.sockets.size === 0) {
+        closeTerminalSession(session);
+      }
+    }, TERMINAL_IDLE_TIMEOUT_MS);
+  }
+
+  terminalWss.on("connection", (ws, request) => {
+    const { query } = parse(request.url || "", true);
+
+    const sessionId =
+      typeof query.sessionId === "string" && query.sessionId.trim()
+        ? query.sessionId.trim()
+        : crypto.randomUUID();
+
+    const session = getTerminalSession(sessionId);
+
+    session.sockets.add(ws);
+
+    ws.send(
+      JSON.stringify({
+        type: "session",
+        sessionId,
+      })
+    );
+
+    if (session.buffer) {
+      ws.send(session.buffer);
+    }
 
     ws.on("message", (message) => {
       const text = message.toString();
@@ -90,25 +203,32 @@ app.prepare().then(() => {
         const msg = JSON.parse(text);
 
         if (msg.type === "resize" && msg.cols && msg.rows) {
-          ptyProcess.resize(
+          session.ptyProcess.resize(
             Math.max(1, Math.floor(msg.cols)),
             Math.max(1, Math.floor(msg.rows))
           );
+          return;
+        }
+
+        if (msg.type === "close-session") {
+          closeTerminalSession(session);
           return;
         }
       } catch {
         // Not JSON, so treat it as raw terminal input.
       }
 
-      ptyProcess.write(text);
+      session.ptyProcess.write(text);
     });
 
     ws.on("close", () => {
-      ptyProcess.kill();
+      session.sockets.delete(ws);
+      scheduleTerminalCleanup(session);
     });
 
     ws.on("error", () => {
-      ptyProcess.kill();
+      session.sockets.delete(ws);
+      scheduleTerminalCleanup(session);
     });
   });
 
@@ -150,7 +270,7 @@ app.prepare().then(() => {
         if (ws.readyState === ws.OPEN) {
           ws.send(JSON.stringify(metrics));
         }
-      } catch (error) {
+      } catch {
         if (ws.readyState === ws.OPEN) {
           ws.send(
             JSON.stringify({
