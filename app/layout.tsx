@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Chakra_Petch, JetBrains_Mono } from "next/font/google";
 import "@/styles/globals.css";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { AppShell } from "@/components/AppShell";
 
 const chakraPetch = Chakra_Petch({
   variable: "--font-chakra",
@@ -61,7 +62,7 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
-          {children}
+          <AppShell>{children}</AppShell>
         </ThemeProvider>
       </body>
     </html>

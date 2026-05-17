@@ -40,6 +40,15 @@ interface OpenFileTab {
   saveError: string;
 }
 
+type ChronosoleWindow = Window &
+  typeof globalThis & {
+    chronosole?: {
+      isElectron: boolean;
+      platform: string;
+      selectDirectory?: () => Promise<string | null>;
+    };
+  };
+
 export default function FileExplorerPage() {
   const { theme, resolvedTheme } = useTheme();
   const currentTheme = resolvedTheme || theme;
@@ -493,7 +502,9 @@ export default function FileExplorerPage() {
 
     if (!shouldContinue) return;
 
-    if (!window.chronosole?.selectDirectory) {
+    const chronosole = (window as ChronosoleWindow).chronosole;
+
+    if (!chronosole?.selectDirectory) {
       setTreeError(
         "Electron folder picker is not available. Check electron/preload.js and BrowserWindow preload setup.",
       );
@@ -503,7 +514,7 @@ export default function FileExplorerPage() {
     try {
       setTreeError("");
 
-      const selectedDirectory = await window.chronosole.selectDirectory();
+      const selectedDirectory = await chronosole.selectDirectory();
 
       console.log("[FileExplorer] Selected directory:", selectedDirectory);
 
@@ -634,8 +645,8 @@ export default function FileExplorerPage() {
           <button
             onClick={() => setVimMode((value) => !value)}
             className={`px-3 py-1.5 rounded border border-border-main transition-colors shrink-0 ${vimMode
-              ? "text-accent bg-bg-hover"
-              : "text-text-2 hover:text-text-1 hover:bg-bg-hover"
+                ? "text-accent bg-bg-hover"
+                : "text-text-2 hover:text-text-1 hover:bg-bg-hover"
               }`}
           >
             Vim {vimMode ? "On" : "Off"}
@@ -708,8 +719,8 @@ export default function FileExplorerPage() {
                       key={tab.path}
                       onClick={() => setActiveFile(tab.path)}
                       className={`group flex h-full items-center gap-2 border-r border-border-main px-3 font-mono text-xs transition-colors ${active
-                        ? "bg-bg-base text-text-1"
-                        : "bg-bg-surface text-text-3 hover:text-text-1 hover:bg-bg-hover"
+                          ? "bg-bg-base text-text-1"
+                          : "bg-bg-surface text-text-3 hover:text-text-1 hover:bg-bg-hover"
                         }`}
                       title={tab.path}
                     >

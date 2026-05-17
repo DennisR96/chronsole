@@ -1,17 +1,17 @@
-import * as cheerio from 'cheerio';
-import { NodeHtmlMarkdown } from 'node-html-markdown';
-import type { AgentTool } from './types';
-import { getActiveChromePage } from './webShared';
+import * as cheerio from "cheerio";
+import { NodeHtmlMarkdown } from "node-html-markdown";
+import type { AgentTool } from "./types";
+import { getActiveChromePage } from "./webShared";
 
 export const webReadTool: AgentTool = {
   definition: {
-    type: 'function',
+    type: "function",
     function: {
-      name: 'web_read',
+      name: "web_read",
       description:
-        'Reads the active Chrome tab and returns clean Markdown that preserves links and structure.',
+        "Reads the active Chrome tab and returns clean Markdown that preserves links and structure.",
       parameters: {
-        type: 'object',
+        type: "object",
         properties: {},
         required: [],
       },
@@ -30,17 +30,16 @@ export const webReadTool: AgentTool = {
 
       const $ = cheerio.load(html);
 
-      $('script, style, svg, noscript, nav, footer').remove();
+      $("script, style, svg, noscript, nav, footer").remove();
 
       const cleanedHtml = $.html();
 
-      const markdown = NodeHtmlMarkdown.translate(cleanedHtml, {
-        headingStyle: 'atx',
-      });
+      const markdown = NodeHtmlMarkdown.translate(cleanedHtml);
 
       return markdown.trim();
-    } catch (err: any) {
-      return `Error reading web tab: ${err.message}`;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      return `Error reading web tab: ${message}`;
     } finally {
       await browser?.close().catch(() => { });
     }

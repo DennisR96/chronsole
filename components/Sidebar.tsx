@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import {
   Zap,
   Home,
@@ -11,6 +11,7 @@ import {
   Bot,
   Globe,
 } from "lucide-react";
+import { useBrowserActivityStore } from "@/store/browserActivityStore";
 
 export type SidebarTab =
   | "home"
@@ -37,6 +38,17 @@ const routeMap: Record<SidebarTab, string> = {
 
 export function Sidebar({ activeTab }: SidebarProps) {
   const router = useRouter();
+  const pathname = usePathname();
+
+  const isBrowserRunning = useBrowserActivityStore(
+    (state) => state.isBrowserRunning,
+  );
+
+  const isBrowserLoading = useBrowserActivityStore(
+    (state) => state.isBrowserLoading,
+  );
+
+  const isBrowserRoute = pathname === "/browser";
 
   const NavIcon = ({
     tab,
@@ -51,14 +63,31 @@ export function Sidebar({ activeTab }: SidebarProps) {
   }) => {
     const isActive = activeTab === tab;
 
+    const shouldShowBrowserBadge =
+      tab === "browser" && !isBrowserRoute && isBrowserRunning;
+
     return (
       <div
         onClick={() => router.push(routeMap[tab])}
-        className={`w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-all ${isActive
+        className={[
+          "relative w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-all overflow-visible",
+          isActive
             ? "bg-bg-base text-accent border border-accent/30 shadow-[0_0_10px_rgba(204,255,0,0.1)]"
-            : "text-text-3 hover:text-text-1 hover:bg-bg-raised border border-transparent"
-          }`}
+            : "text-text-3 hover:text-text-1 hover:bg-bg-raised border border-transparent",
+        ].join(" ")}
       >
+        {shouldShowBrowserBadge && (
+          <span
+            title={isBrowserLoading ? "Browser loading" : "Browser active"}
+            className={[
+              "absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-accent pointer-events-none",
+              isBrowserLoading
+                ? "shadow-[0_0_10px_rgba(204,255,0,0.9)]"
+                : "opacity-80 shadow-[0_0_6px_rgba(204,255,0,0.45)]",
+            ].join(" ")}
+          />
+        )}
+
         <Icon size={20} strokeWidth={isActive ? 2 : 1.5} />
       </div>
     );

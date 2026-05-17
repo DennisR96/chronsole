@@ -8,39 +8,88 @@ const {
   dialog,
 } = require("electron");
 const path = require("path");
+const http = require("http");
 const { spawn } = require("child_process");
 
 const isDev = !app.isPackaged;
 
 let mainWindow = null;
 let nextProcess = null;
+let nextServerStarted = false;
 
-const APP_URL = "http://localhost:3000";
+const PORT = Number(process.env.PORT || 3000);
+const APP_URL = `http://localhost:${PORT}`;
+
+function waitForServer(url, timeoutMs = 30000) {
+  const startedAt = Date.now();
+
+  return new Promise((resolve, reject) => {
+    function check() {
+      const req = http.get(url, (res) => {
+        res.resume();
+        resolve();
+      });
+
+      req.on("error", () => {
+        if (Date.now() - startedAt > timeoutMs) {
+          reject(new Error(`Timed out waiting for ${url}`));
+          return;
+        }
+
+        setTimeout(check, 250);
+      });
+
+      req.setTimeout(1000, () => {
+        req.destroy();
+      });
+    }
+
+    check();
+  });
+}
 
 function startNextServer() {
-  const projectRoot = path.join(__dirname, "..");
+  if (nextServerStarted) return;
+  nextServerStarted = true;
 
-  const command = process.platform === "win32" ? "npm.cmd" : "npm";
-  const args = isDev ? ["run", "dev:next"] : ["run", "start:next"];
+  if (isDev) {
+    const projectRoot = path.join(__dirname, "..");
+    const command = process.platform === "win32" ? "npm.cmd" : "npm";
 
-  nextProcess = spawn(command, args, {
-    cwd: projectRoot,
-    env: {
-      ...process.env,
-      NODE_ENV: isDev ? "development" : "production",
-      ELECTRON: "true",
-    },
-    stdio: "inherit",
-    shell: false,
-  });
+    nextProcess = spawn(command, ["run", "dev:next"], {
+      cwd: projectRoot,
+      env: {
+        ...process.env,
+        NODE_ENV: "development",
+        ELECTRON: "true",
+        PORT: String(PORT),
+      },
+      stdio: "inherit",
+      shell: false,
+    });
 
-  nextProcess.on("exit", (code) => {
-    console.log(`[electron] Next server exited with code ${code}`);
-  });
+    nextProcess.on("exit", (code) => {
+      console.log(`[electron] Next dev server exited with code ${code}`);
+    });
 
-  nextProcess.on("error", (error) => {
-    console.error("[electron] Failed to start Next server:", error);
-  });
+    nextProcess.on("error", (error) => {
+      console.error("[electron] Failed to start Next dev server:", error);
+    });
+
+    return;
+  }
+
+  process.env.NODE_ENV = "production";
+  process.env.ELECTRON = "true";
+  process.env.PORT = String(PORT);
+
+  const appPath = app.getAppPath();
+  const serverPath = path.join(appPath, "server.js");
+
+  console.log("[electron] appPath:", appPath);
+  console.log("[electron] requiring Next server:", serverPath);
+
+  require(serverPath);
 }
 
 function createWindow() {
@@ -52,18 +101,11 @@ function createWindow() {
     title: "CHRONOSOLE",
     backgroundColor: "#050509",
     show: false,
-
     frame: false,
     autoHideMenuBar: true,
-
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
-
-      /**
-       * Enables <webview> in your React/Next page.
-       */
       webviewTag: true,
-
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: false,
@@ -110,9 +152,6 @@ function createWindow() {
   });
 }
 
-/**
- * Folder picker for the file explorer.
- */
 ipcMain.handle("dialog:select-directory", async () => {
   const parentWindow = mainWindow ?? BrowserWindow.getFocusedWindow();
 
@@ -129,9 +168,6 @@ ipcMain.handle("dialog:select-directory", async () => {
   return result.filePaths[0];
 });
 
-/**
- * Optional custom window controls.
- */
 ipcMain.handle("window:minimize", () => {
   const win = BrowserWindow.getFocusedWindow();
   if (win) win.minimize();
@@ -165,11 +201,15 @@ function stopNextServer() {
   nextProcess = null;
 }
 
-app.whenReady().then(() => {
-  /**
-   * Helps embedded pages request normal browser permissions.
-   * You can tighten this later per origin if needed.
-   */
+process.on("uncaughtException", (error) => {
+  console.error("[electron] uncaughtException:", error);
+});
+
+process.on("unhandledRejection", (error) => {
+  console.error("[electron] unhandledRejection:", error);
+});
+
+app.whenReady().then(async () => {
   session.defaultSession.setPermissionRequestHandler(
     (_webContents, permission, callback) => {
       const allowedPermissions = new Set([
@@ -184,17 +224,26 @@ app.whenReady().then(() => {
     },
   );
 
-  startNextServer();
-
-  setTimeout(() => {
+  try {
+    startNextServer();
+    await waitForServer(APP_URL);
     createWindow();
-  }, isDev ? 0 : 1500);
 
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
-  });
+    app.on("activate", async () => {
+      if (BrowserWindow.getAllWindows().length === 0) {
+        try {
+          startNextServer();
+          await waitForServer(APP_URL);
+          createWindow();
+        } catch (error) {
+          console.error("[electron] Failed to reactivate app:", error);
+        }
+      }
+    });
+  } catch (error) {
+    console.error("[electron] Failed to start app:", error);
+    app.quit();
+  }
 });
 
 app.on("before-quit", () => {
